@@ -1,0 +1,10 @@
+logs/
+dist/
+arch/src/
+arch/pkg/
+arch/*.pkg.tar.*
+arch/*.tar.gz
+arch/PKGBUILD
+arch/*.desktop
+arch/*.svg
+verifier/node_modules/

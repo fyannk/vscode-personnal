@@ -1,0 +1,8 @@
+{
+	"name": "code-personal-openvsx-verifier",
+	"private": true,
+	"version": "1.0.0",
+	"dependencies": {
+		"node-ovsx-sign": "1.2.0"
+	}
+}

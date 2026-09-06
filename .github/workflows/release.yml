@@ -1,0 +1,115 @@
+name: Build Code Personal releases
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  push:
+    branches: [main]
+    paths: ['overlay/**', 'scripts/**', 'tests/**', 'config.json', 'Dockerfile', '.github/workflows/release.yml']
+  workflow_dispatch:
+    inputs:
+      upstream_tag:
+        description: Stable VS Code tag, or latest
+        default: latest
+        required: true
+        type: string
+      publish:
+        description: Publish a GitHub release after verification
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+concurrency:
+  group: code-personal-releases
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.plan.outputs.tag }}
+      commit: ${{ steps.plan.outputs.commit }}
+      releaseTag: ${{ steps.plan.outputs.releaseTag }}
+      shouldBuild: ${{ steps.plan.outputs.shouldBuild }}
+      publish: ${{ steps.plan.outputs.publish }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - run: npm test
+      - id: plan
+        run: node scripts/plan.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_TAG: ${{ inputs.upstream_tag || 'latest' }}
+          PUBLISH: ${{ github.event_name != 'workflow_dispatch' || inputs.publish }}
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.shouldBuild == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Reserve space for the VS Code build
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo swapoff -a
+          sudo fallocate -l 12G /swap-code-personal
+          sudo chmod 600 /swap-code-personal
+          sudo mkswap /swap-code-personal
+          sudo swapon /swap-code-personal
+          df -h .
+      - name: Build and verify inside Arch Linux
+        run: bash scripts/build-container.sh --tag "$UPSTREAM_TAG" --commit "$UPSTREAM_COMMIT"
+        env:
+          UPSTREAM_TAG: ${{ needs.plan.outputs.tag }}
+          UPSTREAM_COMMIT: ${{ needs.plan.outputs.commit }}
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: code-personal-release
+          path: dist/
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+      - name: Preserve failure logs
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: code-personal-failure-logs
+          path: .work/**/vscode/.personal-build/logs/
+          include-hidden-files: true
+          retention-days: 7
+
+  publish:
+    needs: [plan, build]
+    if: needs.plan.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: code-personal-release
+          path: dist
+      - name: Publish verified artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.plan.outputs.releaseTag }}
+          UPSTREAM_TAG: ${{ needs.plan.outputs.tag }}
+          CUSTOMIZATION_COMMIT: ${{ github.sha }}
+        run: |
+          cd dist
+          sha256sum --check SHA256SUMS
+          printf 'VS Code OSS %s with Code Personal branding, bundled Copilot, and Open VSX verification.\n\nSee build-info.json for source commits and verification reports for automated checks. GitHub Actions tests the desktop under Xvfb; KDE Wayland pinning and personal account authentication remain manual checks.\n' "$UPSTREAM_TAG" > release-notes.md
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --draft --target "$CUSTOMIZATION_COMMIT" --title "Code Personal $UPSTREAM_TAG" --notes-file release-notes.md
+          fi
+          gh release upload "$RELEASE_TAG" ./*.tar.gz ./*.pkg.tar.zst SHA256SUMS ./*.json --clobber
+          gh release edit "$RELEASE_TAG" --target "$CUSTOMIZATION_COMMIT" --notes-file release-notes.md --draft=false

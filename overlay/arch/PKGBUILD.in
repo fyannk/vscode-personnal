@@ -1,0 +1,28 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root.
+# Packages the locally built artifact; does not download a Microsoft distribution.
+pkgname=code-personal
+pkgver=@@VERSION@@
+pkgrel=@@PKGREL@@
+pkgdesc='Personal build of upstream VS Code OSS with bundled Copilot'
+arch=('x86_64')
+url='https://github.com/microsoft/vscode'
+license=('MIT' 'EPL-2.0')
+depends=('alsa-lib' 'at-spi2-core' 'cairo' 'dbus' 'expat' 'glib2' 'gtk3' 'libcups' 'libdrm' 'libx11' 'libxcb' 'libxcomposite' 'libxdamage' 'libxext' 'libxfixes' 'libxkbcommon' 'libxkbfile' 'libxrandr' 'mesa' 'nspr' 'nss' 'pango' 'libsecret' 'krb5')
+optdepends=('gnome-keyring: secret service for credentials' 'kwallet: KDE credential storage' 'libnotify: desktop notifications')
+options=('!strip' '!debug')
+source=('@@ARCHIVE@@' 'code-personal.desktop' 'code-personal-url-handler.desktop' 'code-personal.svg')
+sha256sums=(@@CHECKSUMS@@)
+
+package() {
+	install -dm755 "$pkgdir/opt/code-personal" "$pkgdir/usr/bin"
+	cp -a "$srcdir/VSCode-linux-x64/." "$pkgdir/opt/code-personal/"
+	ln -s /opt/code-personal/bin/code-personal "$pkgdir/usr/bin/code-personal"
+	# Chromium's upstream setuid sandbox, for systems without user namespaces.
+	chmod 4755 "$pkgdir/opt/code-personal/chrome-sandbox"
+	install -Dm644 "$srcdir/code-personal.desktop" "$pkgdir/usr/share/applications/code-personal.desktop"
+	install -Dm644 "$srcdir/code-personal-url-handler.desktop" "$pkgdir/usr/share/applications/code-personal-url-handler.desktop"
+	install -Dm644 "$srcdir/code-personal.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/code-personal.svg"
+	install -Dm644 "$srcdir/VSCode-linux-x64/resources/app/resources/linux/code.png" "$pkgdir/usr/share/icons/hicolor/512x512/apps/code-personal.png"
+	install -Dm644 "$srcdir/VSCode-linux-x64/resources/app/LICENSE.txt" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

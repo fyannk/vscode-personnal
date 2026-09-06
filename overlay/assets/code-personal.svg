@@ -1,0 +1,6 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+	<rect x="24" y="24" width="464" height="464" rx="112" fill="#6935b5"/>
+	<path d="m184 152-104 104 104 104M328 152l104 104-104 104" fill="none" stroke="#fff" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+	<path d="m280 128-48 256" stroke="#ffc768" stroke-width="32" stroke-linecap="round"/>
+</svg>
