@@ -1,12 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root.
-import { build } from 'esbuild';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// esbuild is a declared upstream build dependency, not a root dependency.
+const { build } = createRequire(path.join(root, 'build/package.json'))('esbuild');
 const verifier = path.join(root, '.personal-build/verifier');
 // Keep the extra locked dependency tree out of upstream's package.json/lockfile.
 if (process.argv.includes('--install') || !existsSync(path.join(verifier, 'node_modules/node-ovsx-sign'))) {
