@@ -30,7 +30,7 @@ The exact Node version from upstream `.nvmrc` is downloaded and its official SHA
 checksum checked. `./scripts/build.sh` also works natively with the dependencies
 listed in `Dockerfile`; close existing Code Personal windows before its smoke test.
 
-Allow roughly 25–35 GB of disk per build tree and substantial memory. CI adds swap
+Allow roughly 25–35 GB of disk per build tree and substantial memory. CI adds an 8 GB swap
 on its disposable runner. `.work/<version>` is a generated cache, not a development
 checkout; remove that version directory when no longer needed. Rebuilding a version
 reuses its checkout and reapplies the overlay.
