@@ -113,7 +113,7 @@ the matching upstream server and use the archive's `code-server` launcher:
 ```json
 {
   "remote.SSH.serverBinaryName": "code-server",
-  "remote.SSH.serverDownloadUrlTemplate": "https://update.code.visualstudio.com/commit:${commit}/server-${os}-${arch}/${quality}"
+  "remote.SSH.serverDownloadUrlTemplate": "https://update.code.visualstudio.com/commit:${commit}/server-${os}-${arch}/stable"
 }
 ```
 
