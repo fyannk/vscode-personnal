@@ -24,6 +24,7 @@ fi
 # This local task includes compile-copilot-extension-build after cleaning extensions.
 npm run gulp vscode-linux-x64 2>&1 | tee .personal-build/logs/build.log
 # Produce the matching remote extension host from this same customized source tree.
+node build/next/index.ts bundle --minify --nls --target server --out out-vscode-reh-min 2>&1 | tee .personal-build/logs/server-bundle.log
 npm run gulp vscode-reh-linux-x64-min-ci 2>&1 | tee .personal-build/logs/server-build.log
 rm -rf ../CodePersonal-server-linux-x64
 mv ../vscode-reh-linux-x64 ../CodePersonal-server-linux-x64

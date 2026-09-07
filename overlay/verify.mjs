@@ -26,6 +26,7 @@ assert.equal(product.commit, execFileSync('git', ['rev-parse', 'HEAD'], { cwd: r
 for (const executable of ['code-personal', 'bin/code-personal']) { accessSync(path.join(output, executable), constants.X_OK); }
 const remoteServer = path.resolve(root, '../CodePersonal-server-linux-x64');
 accessSync(path.join(remoteServer, 'bin/code-personal-server'), constants.X_OK);
+accessSync(path.join(remoteServer, 'out/server-main.js'));
 assert.equal(json(path.join(remoteServer, 'product.json')).applicationName, 'code-personal');
 assert.equal(json(path.join(remoteServer, 'product.json')).serverApplicationName, 'code-personal-server');
 assert.deepEqual(readFileSync(path.join(app, 'resources/linux/code.png')), readFileSync(path.join(root, 'resources/linux/code.png')));

@@ -5,6 +5,7 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 node .personal-build/package-verifier.mjs
 node .personal-build/verify.mjs
+node .personal-build/server-smoke.mjs
 mkdir -p .personal-build/dist
 node .personal-build/desktop.mjs
 version=$(node -p "JSON.parse(require('fs').readFileSync('package.json')).version")
