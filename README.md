@@ -104,6 +104,24 @@ your personal profile and extensions remain.
 Upstream explicit path/environment overrides still apply; never point them at the
 WORK editor's storage.
 
+## Open Remote SSH
+
+Open Remote SSH needs a server archive compatible with the client commit. Until this
+project publishes its own remote-host archives, configure the extension to download
+the matching upstream server and use the archive's `code-server` launcher:
+
+```json
+{
+  "remote.SSH.serverBinaryName": "code-server",
+  "remote.SSH.serverDownloadUrlTemplate": "https://update.code.visualstudio.com/commit:${commit}/server-${os}-${arch}/${quality}"
+}
+```
+
+Put these in Code Personal’s User `settings.json`, not the WORK editor’s settings.
+The installer still uses Code Personal’s `serverDataFolderName`, so the remote server
+and its remote extensions live in `~/.code-personal-server`. The upstream endpoint
+is commit-addressed; strict server validation remains enabled.
+
 ## Maintain the customization
 
 - `overlay/product-overrides.json`: identity, Open VSX endpoints, and the narrow
