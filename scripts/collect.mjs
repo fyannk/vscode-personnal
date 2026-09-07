@@ -11,6 +11,7 @@ const dist = path.join(root, 'dist');
 mkdirSync(path.join(dist, 'logs'), { recursive: true });
 const files = [
 	[path.join(overlay, 'dist'), `code-personal-${info.upstreamTag}-linux-x64.tar.gz`],
+	[path.join(overlay, 'dist'), `code-personal-server-${info.upstreamTag}-linux-x64.tar.gz`],
 	[path.join(overlay, 'arch'), `code-personal-${info.upstreamTag}-${info.packageRevision}-x86_64.pkg.tar.zst`]
 ];
 for (const [directory, filename] of files) { copyFileSync(path.join(directory, filename), path.join(dist, filename)); }

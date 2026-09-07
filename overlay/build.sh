@@ -23,4 +23,8 @@ if [[ ${1:-} != --skip-install ]]; then
 fi
 # This local task includes compile-copilot-extension-build after cleaning extensions.
 npm run gulp vscode-linux-x64 2>&1 | tee .personal-build/logs/build.log
+# Produce the matching remote extension host from this same customized source tree.
+npm run gulp vscode-reh-linux-x64-min-ci 2>&1 | tee .personal-build/logs/server-build.log
+rm -rf ../CodePersonal-server-linux-x64
+mv ../vscode-reh-linux-x64 ../CodePersonal-server-linux-x64
 bash .personal-build/package.sh

@@ -24,6 +24,10 @@ assert.equal(pkg.name, 'Code Personal');
 assert.equal(pkg.desktopName, 'code-personal.desktop');
 assert.equal(product.commit, execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim());
 for (const executable of ['code-personal', 'bin/code-personal']) { accessSync(path.join(output, executable), constants.X_OK); }
+const remoteServer = path.resolve(root, '../CodePersonal-server-linux-x64');
+accessSync(path.join(remoteServer, 'bin/code-personal-server'), constants.X_OK);
+assert.equal(json(path.join(remoteServer, 'product.json')).applicationName, 'code-personal');
+assert.equal(json(path.join(remoteServer, 'product.json')).serverApplicationName, 'code-personal-server');
 assert.deepEqual(readFileSync(path.join(app, 'resources/linux/code.png')), readFileSync(path.join(root, 'resources/linux/code.png')));
 for (const icon of ['out/media/code-icon.svg', 'out/vs/workbench/browser/media/code-icon.svg']) {
 	assert.deepEqual(readFileSync(path.join(app, icon)), readFileSync(path.join(root, '.personal-build/assets/code-personal.svg')), `Personal workbench icon: ${icon}`);
@@ -45,7 +49,7 @@ const verifierDir = path.join(app, 'node_modules/@vscode/vsce-sign');
 assert.equal(json(path.join(verifierDir, 'package.json')).codePersonalVerifier, 'node-ovsx-sign@1.2.0');
 assert.equal(typeof (await import(pathToFileURL(path.join(verifierDir, 'index.cjs')).href)).verify, 'function');
 accessSync(path.join(verifierDir, 'ThirdPartyNotices.txt'));
-const result = { version: pkg.version, commit: product.commit, output, identity: overrides, copilot: { id: `${copilot.publisher}.${copilot.name}`, version: copilot.version, main: copilot.main, runtime }, metadataAndPayloadChecks: 'passed', interactiveAuthentication: 'requires manual sign-in' };
+const result = { version: pkg.version, commit: product.commit, output, remoteServer, identity: overrides, copilot: { id: `${copilot.publisher}.${copilot.name}`, version: copilot.version, main: copilot.main, runtime }, metadataAndPayloadChecks: 'passed', interactiveAuthentication: 'requires manual sign-in' };
 mkdirSync(path.join(root, '.personal-build/logs'), { recursive: true });
 writeFileSync(path.join(root, '.personal-build/logs/verification.json'), JSON.stringify(result, null, 2) + '\n');
 console.log(JSON.stringify(result, null, 2));

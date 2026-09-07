@@ -106,21 +106,24 @@ WORK editor's storage.
 
 ## Open Remote SSH
 
-Open Remote SSH needs a server archive compatible with the client commit. Until this
-project publishes its own remote-host archives, configure the extension to download
-the matching upstream server and use the archive's `code-server` launcher:
+Every release includes a matching **Code Personal remote server** archive. It is
+built from the same customized source commit as the desktop application; no VSCodium
+or Microsoft VS Code server download is used.
 
-```json
-{
-  "remote.SSH.serverBinaryName": "code-server",
-  "remote.SSH.serverDownloadUrlTemplate": "https://update.code.visualstudio.com/commit:${commit}/server-${os}-${arch}/stable"
-}
+Before the first SSH connection to a host, install the archive on that host. Replace
+`HOST` with its SSH alias and use the commit printed on the second line of
+`code-personal --version`:
+
+```bash
+commit=$(code-personal --version | sed -n '2p')
+scp code-personal-server-<version>-linux-x64.tar.gz HOST:/tmp/code-personal-server.tar.gz
+ssh HOST "mkdir -p ~/.code-personal-server/bin/$commit && tar -xzf /tmp/code-personal-server.tar.gz --strip-components=1 -C ~/.code-personal-server/bin/$commit && rm /tmp/code-personal-server.tar.gz"
 ```
 
-Put these in Code Personal’s User `settings.json`, not the WORK editor’s settings.
-The installer still uses Code Personal’s `serverDataFolderName`, so the remote server
-and its remote extensions live in `~/.code-personal-server`. The upstream endpoint
-is commit-addressed; strict server validation remains enabled.
+Then use **Remote-SSH: Connect to Host…**. The extension detects
+`bin/code-personal-server` in the preinstalled directory and starts it without any
+download. Remote data and remote extensions live in `~/.code-personal-server`.
+Use a Linux x64 archive for Linux x64 hosts; other architectures are not built yet.
 
 ## Maintain the customization
 
