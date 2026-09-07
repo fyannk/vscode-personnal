@@ -9,6 +9,12 @@
 	"tunnelApplicationName": "code-personal-tunnel",
 	"linuxIconName": "code-personal",
 	"urlProtocol": "code-personal",
+	"extensionEnabledApiProposals": {
+		"jeanp413.open-remote-ssh": [
+			"resolvers",
+			"contribViewsRemote"
+		]
+	},
 	"extensionsGallery": {
 		"serviceUrl": "https://open-vsx.org/vscode/gallery",
 		"itemUrl": "https://open-vsx.org/vscode/item",

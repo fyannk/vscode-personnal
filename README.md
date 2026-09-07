@@ -106,7 +106,10 @@ WORK editor's storage.
 
 ## Maintain the customization
 
-- `overlay/product-overrides.json`: identity and Open VSX endpoints.
+- `overlay/product-overrides.json`: identity, Open VSX endpoints, and the narrow
+  proposed-API allow-list for Open Remote - SSH. It permits only
+  `jeanp413.open-remote-ssh` to use the two remote APIs it declares; do not add
+  unrelated extensions or proposals without reviewing their manifests.
 - `overlay/assets/code-personal.svg`: editable icon for desktop PNG and titlebar SVG.
 - `overlay/verifier/`: pinned `node-ovsx-sign` and its API adapter.
   `package-verifier.mjs` bundles the runtime/license notices without modifying
