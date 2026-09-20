@@ -61,8 +61,9 @@ base image: builds are traceable, not claimed to be byte-for-byte reproducible.
 
 To run manually: **Actions → Build Code Personal releases → Run workflow**.
 Choose `latest` or a numeric stable tag. Clear **publish** for a test-only build,
-even if that version is already released. Workflow artifacts/logs are retained for
-seven days; release assets remain until deleted. Private Actions usage is subject
+even if that version is already released. The release artifact is deleted once
+its assets are uploaded (otherwise it expires after one day); failure logs are
+retained for seven days; release assets remain until deleted. Private Actions usage is subject
 to your GitHub account's allowance and billing settings.
 
 Actions must be enabled and the workflow present on the default branch. This is
