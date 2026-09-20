@@ -3,6 +3,6 @@ RUN pacman -Syu --noconfirm --needed \
     git python python-setuptools pkgconf libx11 libxkbfile libsecret krb5 \
     curl ripgrep librsvg desktop-file-utils xorg-server-xvfb xorg-xauth \
     gtk3 nss alsa-lib libxss libxrandr mesa libdrm libcups at-spi2-core \
-    libxcomposite libxdamage libxfixes libxkbcommon pango dbus unzip \
+    libxcomposite libxdamage libxfixes libxkbcommon pango dbus unzip dpkg \
     && pacman -Scc --noconfirm
 WORKDIR /workspace

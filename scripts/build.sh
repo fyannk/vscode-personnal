@@ -28,4 +28,5 @@ else
 fi
 node .personal-build/check-gallery.mjs
 (cd .personal-build/arch && makepkg --cleanbuild --force)
+node .personal-build/deb-package.mjs
 node "$project_root/scripts/collect.mjs" "$source_tree"

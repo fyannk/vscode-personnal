@@ -12,7 +12,8 @@ mkdirSync(path.join(dist, 'logs'), { recursive: true });
 const files = [
 	[path.join(overlay, 'dist'), `code-personal-${info.upstreamTag}-linux-x64.tar.gz`],
 	[path.join(overlay, 'dist'), `code-personal-server-${info.upstreamTag}-linux-x64.tar.gz`],
-	[path.join(overlay, 'arch'), `code-personal-${info.upstreamTag}-${info.packageRevision}-x86_64.pkg.tar.zst`]
+	[path.join(overlay, 'arch'), `code-personal-${info.upstreamTag}-${info.packageRevision}-x86_64.pkg.tar.zst`],
+	[path.join(overlay, 'dist'), `code-personal_${info.upstreamTag}-${info.packageRevision}_amd64.deb`]
 ];
 for (const [directory, filename] of files) { copyFileSync(path.join(directory, filename), path.join(dist, filename)); }
 writeFileSync(path.join(dist, 'build-info.json'), JSON.stringify({ ...info, buildNode: process.version, buildTime: new Date().toISOString() }, null, 2) + '\n');

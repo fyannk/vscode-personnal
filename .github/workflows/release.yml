@@ -73,6 +73,17 @@ jobs:
         env:
           UPSTREAM_TAG: ${{ needs.plan.outputs.tag }}
           UPSTREAM_COMMIT: ${{ needs.plan.outputs.commit }}
+      - name: Install the Debian package on Ubuntu
+        run: |
+          # The package is built inside Arch; resolve its dependencies against a real Ubuntu.
+          sudo apt-get update
+          sudo apt-get install --yes ./dist/code-personal_*_amd64.deb
+          test "$(readlink -f /usr/bin/code-personal)" = /opt/code-personal/bin/code-personal
+          code-personal --version | tee deb-version.log
+          test "$(sed -n '2p' deb-version.log)" = "$(jq -r .upstreamCommit dist/build-info.json)"
+          test -u /opt/code-personal/chrome-sandbox
+          sudo apt-get remove --yes code-personal
+          test ! -e /usr/bin/code-personal
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: code-personal-release
@@ -111,11 +122,11 @@ jobs:
         run: |
           cd dist
           sha256sum --check SHA256SUMS
-          printf 'VS Code OSS %s with Code Personal branding, bundled Copilot, and Open VSX verification.\n\nSee build-info.json for source commits and verification reports for automated checks. GitHub Actions tests the desktop under Xvfb; KDE Wayland pinning and personal account authentication remain manual checks.\n' "$UPSTREAM_TAG" > release-notes.md
+          printf 'VS Code OSS %s with Code Personal branding, bundled Copilot, and Open VSX verification.\n\nSee build-info.json for source commits and verification reports for automated checks. GitHub Actions tests the desktop under Xvfb and installs the Debian package on Ubuntu 24.04; KDE Wayland pinning and personal account authentication remain manual checks.\n' "$UPSTREAM_TAG" > release-notes.md
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --draft --target "$CUSTOMIZATION_COMMIT" --title "Code Personal $UPSTREAM_TAG" --notes-file release-notes.md
           fi
-          gh release upload "$RELEASE_TAG" ./*.tar.gz ./*.pkg.tar.zst SHA256SUMS ./*.json --clobber
+          gh release upload "$RELEASE_TAG" ./*.tar.gz ./*.pkg.tar.zst ./*.deb SHA256SUMS ./*.json --clobber
           gh release edit "$RELEASE_TAG" --target "$CUSTOMIZATION_COMMIT" --notes-file release-notes.md --draft=false
       - name: Delete the release artifact
         env:

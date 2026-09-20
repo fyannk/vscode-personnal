@@ -47,12 +47,16 @@ pushes to `main`, and on manual dispatch. It:
    and bundled Copilot manifest/runtime files.
 5. Launches the desktop under Xvfb, installs a real Open VSX extension with signature
    checks enabled, and requires an altered VSIX to fail verification.
-6. Produces the Arch package, application archive, checksums and source provenance.
-7. Publishes assets to this private repository's **Releases** only after checks pass.
+6. Produces the Arch and Debian/Ubuntu packages, application archive, checksums and
+   source provenance.
+7. Installs the Debian package on the Ubuntu 24.04 runner, checks its launcher and
+   version, then removes it.
+8. Publishes assets to this private repository's **Releases** only after checks pass.
 
 Release tags are `personal-v<VS_CODE_VERSION>-r<PACKAGE_REVISION>`. Bump
 `packageRevision` in `config.json` for a customization update to an already published
-VS Code version. Keep previous packages for rollback.
+VS Code version; it is the `pkgrel` of the Arch package and the Debian revision of the
+`.deb`. Keep previous packages for rollback.
 
 Scheduled builds follow the latest stable release; `upstream.json` remains the
 reviewed default for local builds. Every artifact includes `build-info.json` with
@@ -79,20 +83,32 @@ References: [workflow triggers](https://docs.github.com/en/actions/reference/wor
 
 ## Install, update, or roll back
 
-Download the `.pkg.tar.zst` from **Releases**, or use your local `dist/` package:
+Download the package for your distribution from **Releases**, or use your local
+`dist/` package.
+
+Arch Linux / CachyOS:
 
 ```bash
 sudo pacman -U ./code-personal-<version>-<revision>-x86_64.pkg.tar.zst
 ```
 
-The package owns `/opt/code-personal`, `/usr/bin/code-personal`, separate desktop
-entries and `code-personal` icons. It does not conflict with `visual-studio-code-bin`.
+Ubuntu / Debian (the `./` prefix makes `apt` resolve dependencies from the file):
+
+```bash
+sudo apt install ./code-personal_<version>-<revision>_amd64.deb
+```
+
+Both packages install the same layout: `/opt/code-personal`, `/usr/bin/code-personal`,
+separate desktop entries and `code-personal` icons. They do not conflict with
+`visual-studio-code-bin`, `code` or `codium`. The Debian package declares upstream's
+own `.deb` runtime dependencies and is verified to install on Ubuntu 22.04 and 24.04.
 Fully close and reopen Code Personal after updates; Reload Window can retain an old
 icon or cached shared-process module.
 
 CI publishes packages; it does **not** install updates on your computer. Roll back
-with `sudo pacman -U` on a saved package. Uninstall with `sudo pacman -R code-personal`;
-your personal profile and extensions remain.
+with `sudo pacman -U` or `sudo apt install ./…` on a saved package. Uninstall with
+`sudo pacman -R code-personal` or `sudo apt remove code-personal`; your personal
+profile and extensions remain.
 
 | Data | Default path |
 | --- | --- |
@@ -140,11 +156,22 @@ Use a Linux x64 archive for Linux x64 hosts; other architectures are not built y
   proposed-API allow-list for Open Remote - SSH. It permits only
   `jeanp413.open-remote-ssh` to use the two remote APIs it declares; do not add
   unrelated extensions or proposals without reviewing their manifests.
+- `overlay/customize.mjs`: applies the overrides and patches the upstream
+  `telemetry.telemetryLevel` default to `off`. VS Code OSS has no Microsoft
+  telemetry endpoint or crash upload URL, but bundled Copilot reports usage to
+  GitHub unless this setting is `off`; users can still opt in. The patch and
+  `verify.mjs` fail the build if upstream moves the setting.
 - `overlay/assets/code-personal.svg`: editable icon for desktop PNG and titlebar SVG.
 - `overlay/verifier/`: pinned `node-ovsx-sign` and its API adapter.
   `package-verifier.mjs` bundles the runtime/license notices without modifying
   upstream package files or disabling verification.
 - `overlay/arch/PKGBUILD.in`: package layout; revision comes from `config.json`.
+- `overlay/debian/control.in` and `overlay/deb-package.mjs`: the Debian package, built
+  with `dpkg-deb` inside the Arch container from the same verified application tree
+  and layout. Its `Depends` come from upstream's `build/linux/debian/dep-lists.ts`
+  (the reference list behind Microsoft's own `.deb`), plus `libsecret` and Kerberos
+  like the Arch package. No maintainer scripts: dpkg triggers refresh the desktop
+  and icon databases.
 - `scripts/`: preparation, build environment, release planning and artifact collection.
 - `tests/`: release-planning tests. Run `npm test` with Node 22 or newer.
 - `BUILD_HISTORY.md`: historical notes from the original checkout, including the
@@ -156,11 +183,6 @@ patches or bypass failures automatically. Update `overlay/verifier/package-lock.
 deliberately when updating verifier dependencies.
 
 ## Verification limits
-- `overlay/customize.mjs`: applies the overrides and patches the upstream
-  `telemetry.telemetryLevel` default to `off`. VS Code OSS has no Microsoft
-  telemetry endpoint or crash upload URL, but bundled Copilot reports usage to
-  GitHub unless this setting is `off`; users can still opt in. The patch and
-  `verify.mjs` fail the build if upstream moves the setting.
 
 CI tests a headless X11 desktop, not Plasma Wayland pinning. Only the disposable
 container smoke test uses `--no-sandbox`, because nested browser sandboxing is not

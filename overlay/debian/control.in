@@ -1,0 +1,15 @@
+Package: code-personal
+Version: @@VERSION@@
+Section: devel
+Priority: optional
+Architecture: amd64
+Depends: @@DEPENDS@@
+Recommends: @@RECOMMENDS@@
+Suggests: gnome-keyring
+Installed-Size: @@INSTALLEDSIZE@@
+Maintainer: fyannk <fyannk@users.noreply.github.com>
+Homepage: https://github.com/microsoft/vscode
+Description: Personal build of upstream VS Code OSS with bundled Copilot
+ Code Personal is packaged under /opt/code-personal with its own identity,
+ storage, desktop entries and icons. It does not conflict with the code,
+ code-insiders or codium packages.
