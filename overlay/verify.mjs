@@ -42,6 +42,11 @@ assert.ok([entry, `${entry}.js`].some(file => existsSync(file) && statSync(file)
 assert.ok(copilot.enabledApiProposals.length > 0, 'Copilot proposed APIs');
 accessSync(path.join(app, 'extensions/github-authentication/package.json'));
 const runtime = path.join(app, 'node_modules.asar.unpacked/@github/copilot-linux-x64');
+// Each bundle registering the setting must carry the patched default.
+for (const bundle of [path.join(app, 'out/main.js'), path.join(app, 'out/vs/workbench/workbench.desktop.main.js'), path.join(remoteServer, 'out/server-main.js')]) {
+	const match = readFileSync(bundle, 'utf8').match(/\[TELEMETRY_SETTING_ID\]: \{[^]*?"default": "(\w+)"/);
+	assert.equal(match?.[1], 'off', `telemetry.telemetryLevel default in ${bundle}`);
+}
 accessSync(path.join(runtime, 'package.json'));
 accessSync(path.join(runtime, 'prebuilds/linux-x64/runtime.node'));
 accessSync(path.join(runtime, 'ripgrep/bin/linux-x64/rg'), constants.X_OK);

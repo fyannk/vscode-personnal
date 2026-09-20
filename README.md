@@ -156,6 +156,11 @@ patches or bypass failures automatically. Update `overlay/verifier/package-lock.
 deliberately when updating verifier dependencies.
 
 ## Verification limits
+- `overlay/customize.mjs`: applies the overrides and patches the upstream
+  `telemetry.telemetryLevel` default to `off`. VS Code OSS has no Microsoft
+  telemetry endpoint or crash upload URL, but bundled Copilot reports usage to
+  GitHub unless this setting is `off`; users can still opt in. The patch and
+  `verify.mjs` fail the build if upstream moves the setting.
 
 CI tests a headless X11 desktop, not Plasma Wayland pinning. Only the disposable
 container smoke test uses `--no-sandbox`, because nested browser sandboxing is not
