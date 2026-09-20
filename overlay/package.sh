@@ -4,6 +4,8 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 node .personal-build/package-verifier.mjs
+mkdir -p ../CodePersonal-server-linux-x64/node_modules/@vscode
+cp -a ../VSCode-linux-x64/resources/app/node_modules/@vscode/vsce-sign ../CodePersonal-server-linux-x64/node_modules/@vscode/
 node .personal-build/verify.mjs
 node .personal-build/server-smoke.mjs
 mkdir -p .personal-build/dist

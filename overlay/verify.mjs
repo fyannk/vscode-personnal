@@ -46,10 +46,14 @@ accessSync(path.join(runtime, 'package.json'));
 accessSync(path.join(runtime, 'prebuilds/linux-x64/runtime.node'));
 accessSync(path.join(runtime, 'ripgrep/bin/linux-x64/rg'), constants.X_OK);
 accessSync(path.join(copilotDir, 'dist/copilotCLIShim.js'));
-const verifierDir = path.join(app, 'node_modules/@vscode/vsce-sign');
-assert.equal(json(path.join(verifierDir, 'package.json')).codePersonalVerifier, 'node-ovsx-sign@1.2.0');
-assert.equal(typeof (await import(pathToFileURL(path.join(verifierDir, 'index.cjs')).href)).verify, 'function');
-accessSync(path.join(verifierDir, 'ThirdPartyNotices.txt'));
+for (const application of [app, remoteServer]) {
+	const verifierDir = path.join(application, 'node_modules/@vscode/vsce-sign');
+	assert.equal(json(path.join(verifierDir, 'package.json')).codePersonalVerifier, 'node-ovsx-sign@1.2.0');
+	assert.equal(typeof (await import(pathToFileURL(path.join(verifierDir, 'index.cjs')).href)).verify, 'function');
+	accessSync(path.join(verifierDir, 'ThirdPartyNotices.txt'));
+}
+// Exercise package resolution using the remote server's own Node runtime.
+execFileSync(path.join(remoteServer, 'node'), ['--input-type=module', '-e', 'import assert from "node:assert/strict"; import { verify } from "@vscode/vsce-sign"; assert.equal(typeof verify, "function");'], { cwd: remoteServer });
 const result = { version: pkg.version, commit: product.commit, output, remoteServer, identity: overrides, copilot: { id: `${copilot.publisher}.${copilot.name}`, version: copilot.version, main: copilot.main, runtime }, metadataAndPayloadChecks: 'passed', interactiveAuthentication: 'requires manual sign-in' };
 mkdirSync(path.join(root, '.personal-build/logs'), { recursive: true });
 writeFileSync(path.join(root, '.personal-build/logs/verification.json'), JSON.stringify(result, null, 2) + '\n');

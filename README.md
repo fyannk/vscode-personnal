@@ -123,6 +123,14 @@ ssh HOST "mkdir -p ~/.code-personal-server/bin/$commit && tar -xzf /tmp/code-per
 Then use **Remote-SSH: Connect to Host…**. The extension detects
 `bin/code-personal-server` in the preinstalled directory and starts it without any
 download. Remote data and remote extensions live in `~/.code-personal-server`.
+
+Packaging includes the Open VSX verifier (`@vscode/vsce-sign`) in both the desktop
+and server payloads and checks that the server's Node runtime can import it.
+If an older server reports **Signature verification was not executed**, inspect
+its `data/logs/*/remoteagent.log` for `Could not load vsce-sign module`. Reinstall
+the corrected server archive, then restart the remote server before reconnecting:
+the running process caches a failed verifier import. Keep
+`extensions.verifySignature` enabled.
 Use a Linux x64 archive for Linux x64 hosts; other architectures are not built yet.
 
 ## Maintain the customization
