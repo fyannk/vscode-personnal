@@ -1,6 +1,6 @@
 {
 	"applicationName": "code-personal",
-	"packageRevision": 6,
+	"packageRevision": 7,
 	"remoteServerReleaseRepository": "fyannk/vscode-personnal",
 	"galleryTestExtension": "editorconfig.editorconfig"
 }
