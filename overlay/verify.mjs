@@ -51,11 +51,14 @@ accessSync(path.join(remoteSSHDir, 'lib/extension.js'));
 accessSync(path.join(remoteSSHDir, 'src/scripts/server-setup.sh'));
 assert.match(readFileSync(path.join(remoteSSHDir, 'lib/extension.js'), 'utf8'), /No Code Personal server download URL is configured/);
 const runtime = path.join(app, 'node_modules.asar.unpacked/@github/copilot-linux-x64');
-// Each bundle registering the setting must carry the patched default.
-for (const bundle of [path.join(app, 'out/main.js'), path.join(app, 'out/vs/workbench/workbench.desktop.main.js'), path.join(remoteServer, 'out/server-main.js')]) {
+// The desktop bundles register the user setting and must carry the patched default.
+for (const bundle of [path.join(app, 'out/main.js'), path.join(app, 'out/vs/workbench/workbench.desktop.main.js')]) {
 	const match = readFileSync(bundle, 'utf8').match(/\[TELEMETRY_SETTING_ID\]: \{[^]*?"default": "(\w+)"/);
 	assert.equal(match?.[1], 'off', `telemetry.telemetryLevel default in ${bundle}`);
 }
+// The remote agent does not register the desktop setting schema; its launcher
+// explicitly disables telemetry instead.
+assert.match(readFileSync(path.join(remoteSSHDir, 'src/scripts/server-setup.sh'), 'utf8'), /--telemetry-level off/);
 accessSync(path.join(runtime, 'package.json'));
 accessSync(path.join(runtime, 'prebuilds/linux-x64/runtime.node'));
 accessSync(path.join(runtime, 'ripgrep/bin/linux-x64/rg'), constants.X_OK);
