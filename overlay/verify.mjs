@@ -12,6 +12,7 @@ const app = path.join(output, 'resources/app');
 const json = file => JSON.parse(readFileSync(file, 'utf8'));
 const product = json(path.join(app, 'product.json'));
 const overrides = json(path.join(root, '.personal-build/product-overrides.json'));
+const buildInfo = json(path.join(root, '.personal-build/build-info.json'));
 const baseline = json(path.join(root, '.personal-build/upstream.json'));
 execFileSync('git', ['merge-base', '--is-ancestor', baseline.commit, 'HEAD'], { cwd: root });
 const upstream = JSON.parse(execFileSync('git', ['show', `${baseline.commit}:product.json`], { cwd: root, encoding: 'utf8' }));
@@ -23,6 +24,7 @@ const pkg = json(path.join(app, 'package.json'));
 assert.equal(pkg.name, 'Code Personal');
 assert.equal(pkg.desktopName, 'code-personal.desktop');
 assert.equal(product.commit, execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim());
+assert.equal(product.serverDownloadUrlTemplate, `https://github.com/${buildInfo.remoteServerReleaseRepository}/releases/download/personal-v\${version}-r${buildInfo.packageRevision}/code-personal-server-\${version}-\${os}-\${arch}.tar.gz`);
 for (const executable of ['code-personal', 'bin/code-personal']) { accessSync(path.join(output, executable), constants.X_OK); }
 const remoteServer = path.resolve(root, '../CodePersonal-server-linux-x64');
 accessSync(path.join(remoteServer, 'bin/code-personal-server'), constants.X_OK);
@@ -41,6 +43,13 @@ const entry = path.resolve(copilotDir, copilot.main);
 assert.ok([entry, `${entry}.js`].some(file => existsSync(file) && statSync(file).size > 0), 'Copilot entry point');
 assert.ok(copilot.enabledApiProposals.length > 0, 'Copilot proposed APIs');
 accessSync(path.join(app, 'extensions/github-authentication/package.json'));
+const remoteSSHDir = path.join(app, 'extensions/code-personal.remote-ssh');
+const remoteSSH = json(path.join(remoteSSHDir, 'package.json'));
+assert.equal(`${remoteSSH.publisher}.${remoteSSH.name}`, 'code-personal.code-personal-remote-ssh');
+assert.equal(remoteSSH.displayName, 'Code Personal Remote - SSH');
+accessSync(path.join(remoteSSHDir, 'lib/extension.js'));
+accessSync(path.join(remoteSSHDir, 'src/scripts/server-setup.sh'));
+assert.match(readFileSync(path.join(remoteSSHDir, 'lib/extension.js'), 'utf8'), /No Code Personal server download URL is configured/);
 const runtime = path.join(app, 'node_modules.asar.unpacked/@github/copilot-linux-x64');
 // Each bundle registering the setting must carry the patched default.
 for (const bundle of [path.join(app, 'out/main.js'), path.join(app, 'out/vs/workbench/workbench.desktop.main.js'), path.join(remoteServer, 'out/server-main.js')]) {

@@ -10,8 +10,14 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const productPath = path.join(root, 'product.json');
 const product = JSON.parse(readFileSync(productPath, 'utf8'));
 const overrides = JSON.parse(readFileSync(path.join(root, '.personal-build/product-overrides.json'), 'utf8'));
+const buildInfo = JSON.parse(readFileSync(path.join(root, '.personal-build/build-info.json'), 'utf8'));
 // Merge only these explicit keys; all upstream AI/auth/built-in configuration survives.
 Object.assign(product, overrides);
+assert.match(buildInfo.remoteServerReleaseRepository, /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/, 'Expected GitHub owner/repository for remote server releases');
+assert.match(String(buildInfo.packageRevision), /^[1-9][0-9]*$/, 'Expected positive package revision for remote server releases');
+// The bundled remote resolver reads this field. Keep the client and remote archive
+// on the same published Code Personal release; do not fall back to another product.
+product.serverDownloadUrlTemplate = `https://github.com/${buildInfo.remoteServerReleaseRepository}/releases/download/personal-v\${version}-r${buildInfo.packageRevision}/code-personal-server-\${version}-\${os}-\${arch}.tar.gz`;
 writeFileSync(productPath, JSON.stringify(product, null, '\t') + '\n');
 // Default telemetry to off. OSS ships no telemetry endpoint, but bundled Copilot
 // honours this setting, and it cannot be defaulted from product.json or an extension
@@ -23,4 +29,4 @@ assert.equal(telemetry.split(telemetryDefault).length, 2, 'Exactly one telemetry
 writeFileSync(telemetryPath, telemetry.replace(telemetryDefault, "'default': TelemetryConfiguration.OFF,"));
 execFileSync('rsvg-convert', ['-w', '512', '-h', '512', '-o', path.join(root, 'resources/linux/code.png'), path.join(root, '.personal-build/assets/code-personal.svg')]);
 copyFileSync(path.join(root, '.personal-build/assets/code-personal.svg'), path.join(root, 'src/vs/workbench/browser/media/code-icon.svg'));
-console.log('Applied Code Personal identity, Open VSX gallery, telemetry-off default, and desktop/titlebar icons.');
+console.log('Applied Code Personal identity, matching remote-server download URL, Open VSX gallery, telemetry-off default, and desktop/titlebar icons.');

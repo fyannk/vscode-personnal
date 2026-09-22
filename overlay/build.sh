@@ -23,6 +23,19 @@ if [[ ${1:-} != --skip-install ]]; then
 fi
 # This local task includes compile-copilot-extension-build after cleaning extensions.
 npm run gulp vscode-linux-x64 2>&1 | tee .personal-build/logs/build.log
+# Bundle the Code Personal fork of Open Remote - SSH into the desktop payload.
+# Its runtime script templates remain beside the bundle because it reads them when
+# creating the remote installation command.
+remote_ssh_source=.personal-build/remote-ssh
+remote_ssh_target=../VSCode-linux-x64/resources/app/extensions/code-personal.remote-ssh
+npm ci --prefix "$remote_ssh_source" --ignore-scripts --no-audit --no-fund
+npm run --prefix "$remote_ssh_source" build
+rm -rf "$remote_ssh_target"
+mkdir -p "$remote_ssh_target/src"
+cp "$remote_ssh_source/package.json" "$remote_ssh_source/LICENSE.txt" "$remote_ssh_source/NOTICE.md" "$remote_ssh_target/"
+cp "$remote_ssh_source/vendor/ssh2/LICENSE" "$remote_ssh_target/SSH2-LICENSE.txt"
+cp -a "$remote_ssh_source/lib" "$remote_ssh_source/resources" "$remote_ssh_target/"
+cp -a "$remote_ssh_source/src/scripts" "$remote_ssh_target/src/"
 # Produce the matching remote extension host from this same customized source tree.
 node build/next/index.ts bundle --minify --nls --target server --out out-vscode-reh-min 2>&1 | tee .personal-build/logs/server-bundle.log
 npm run gulp vscode-reh-linux-x64-min-ci 2>&1 | tee .personal-build/logs/server-build.log

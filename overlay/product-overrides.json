@@ -10,7 +10,7 @@
 	"linuxIconName": "code-personal",
 	"urlProtocol": "code-personal",
 	"extensionEnabledApiProposals": {
-		"jeanp413.open-remote-ssh": [
+		"code-personal.code-personal-remote-ssh": [
 			"resolvers",
 			"contribViewsRemote"
 		]

@@ -8,3 +8,7 @@ arch/PKGBUILD
 arch/*.desktop
 arch/*.svg
 verifier/node_modules/
+remote-ssh/node_modules/
+remote-ssh/lib/
+remote-ssh/out/
+remote-ssh/tsconfig.tsbuildinfo

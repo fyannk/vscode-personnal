@@ -123,12 +123,25 @@ WORK editor's storage.
 
 ## Open Remote SSH
 
-Every release includes a matching **Code Personal remote server** archive. It is
-built from the same customized source commit as the desktop application; no VSCodium
-or Microsoft VS Code server download is used.
+Every release bundles **Code Personal Remote - SSH**, a branded adaptation of Open
+Remote - SSH. On first connection it downloads the matching **Code Personal remote
+server** archive from that same release—never a VSCodium or Microsoft VS Code server.
+Remote data and remote extensions live in `~/.code-personal-server`.
 
-Before the first SSH connection to a host, install the archive on that host. Replace
-`HOST` with its SSH alias and use the commit printed on the second line of
+Use **Code Personal Remote - SSH: Connect to Host…**. The extension preserves the
+standard `remote.SSH.*` setting names, including
+`remote.SSH.serverDownloadUrlTemplate` for an intentional private mirror. A remote
+host that requires an HTTP(S) proxy should expose its usual `http_proxy` /
+`https_proxy` environment variables to a login shell; the installer runs through
+`bash -l`, so normal remote profile configuration is used.
+
+The bundled resolver uses the `code-personal-ssh` remote authority. This keeps it
+separate from a user-installed Open Remote - SSH extension, which owns
+`ssh-remote`; open existing `ssh-remote` windows again through the Code Personal
+command after upgrading.
+
+The release archive can still be installed manually on air-gapped hosts. Replace
+`HOST` with its SSH alias and use the commit on the second line of
 `code-personal --version`:
 
 ```bash
@@ -136,10 +149,6 @@ commit=$(code-personal --version | sed -n '2p')
 scp code-personal-server-<version>-linux-x64.tar.gz HOST:/tmp/code-personal-server.tar.gz
 ssh HOST "mkdir -p ~/.code-personal-server/bin/$commit && tar -xzf /tmp/code-personal-server.tar.gz --strip-components=1 -C ~/.code-personal-server/bin/$commit && rm /tmp/code-personal-server.tar.gz"
 ```
-
-Then use **Remote-SSH: Connect to Host…**. The extension detects
-`bin/code-personal-server` in the preinstalled directory and starts it without any
-download. Remote data and remote extensions live in `~/.code-personal-server`.
 
 Packaging includes the Open VSX verifier (`@vscode/vsce-sign`) in both the desktop
 and server payloads and checks that the server's Node runtime can import it.
@@ -153,9 +162,13 @@ Use a Linux x64 archive for Linux x64 hosts; other architectures are not built y
 ## Maintain the customization
 
 - `overlay/product-overrides.json`: identity, Open VSX endpoints, and the narrow
-  proposed-API allow-list for Open Remote - SSH. It permits only
-  `jeanp413.open-remote-ssh` to use the two remote APIs it declares; do not add
-  unrelated extensions or proposals without reviewing their manifests.
+  proposed-API allow-list for bundled Code Personal Remote - SSH. It permits only
+  `code-personal.code-personal-remote-ssh` to use the two remote APIs it declares;
+  do not add unrelated extensions or proposals without reviewing their manifests.
+- `overlay/remote-ssh/`: vendored MIT source for Code Personal Remote - SSH,
+  derived from Open Remote - SSH 0.3.1. Its server resolver is branded and refuses
+  to fall back to any other distribution. Keep the upstream attribution and licenses
+  when updating it.
 - `overlay/customize.mjs`: applies the overrides and patches the upstream
   `telemetry.telemetryLevel` default to `off`. VS Code OSS has no Microsoft
   telemetry endpoint or crash upload URL, but bundled Copilot reports usage to
