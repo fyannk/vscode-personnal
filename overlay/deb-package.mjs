@@ -56,7 +56,9 @@ execFileSync('dpkg-deb', ['--root-owner-group', '-Zxz', `--threads-max=${availab
 rmSync(path.join(overlay, 'deb'), { recursive: true, force: true });
 
 const info = execFileSync('dpkg-deb', ['--info', deb], { encoding: 'utf8' });
-const contents = execFileSync('dpkg-deb', ['--contents', deb], { encoding: 'utf8' });
+// Recent VS Code payloads have a package listing larger than Node's 1 MiB default.
+// Keep the captured listing bounded while allowing the complete ownership audit.
+const contents = execFileSync('dpkg-deb', ['--contents', deb], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
 mkdirSync(path.join(overlay, 'logs'), { recursive: true });
 writeFileSync(path.join(overlay, 'logs/deb.log'), info + contents);
 assert.match(info, /^ Package: code-personal$/m);
