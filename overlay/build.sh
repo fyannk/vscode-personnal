@@ -25,6 +25,11 @@ export npm_config_arch=x64
 export VSCODE_ARCH=x64
 export ELECTRON_SKIP_BINARY_DOWNLOAD=1
 export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+# setup-env.sh runs TypeScript helpers whose dependencies live in build/node_modules.
+# Upstream CI installs those dependencies before loading the sysroot environment.
+if [[ ${1:-} != --skip-install ]]; then
+	npm ci --prefix build 2>&1 | tee .personal-build/logs/npm-ci-build.log
+fi
 source ./build/azure-pipelines/linux/setup-env.sh
 if [[ ${1:-} != --skip-install ]]; then
 	npm ci 2>&1 | tee .personal-build/logs/npm-ci.log
