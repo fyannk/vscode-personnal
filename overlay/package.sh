@@ -7,6 +7,7 @@ node .personal-build/package-verifier.mjs
 mkdir -p ../CodePersonal-server-linux-x64/node_modules/@vscode
 cp -a ../VSCode-linux-x64/resources/app/node_modules/@vscode/vsce-sign ../CodePersonal-server-linux-x64/node_modules/@vscode/
 node .personal-build/verify.mjs
+node .personal-build/verify-abi.mjs
 node .personal-build/server-smoke.mjs
 mkdir -p .personal-build/dist
 node .personal-build/desktop.mjs

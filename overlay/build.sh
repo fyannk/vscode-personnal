@@ -17,6 +17,15 @@ fi
 [[ $(uname -sm) == 'Linux x86_64' ]] || { echo 'This helper targets Linux x64.' >&2; exit 1; }
 mkdir -p .personal-build/logs
 node .personal-build/customize.mjs
+# Build Linux native modules against VS Code's pinned glibc 2.28 sysroots,
+# rather than the build container's rolling Arch Linux ABI. This is the same
+# environment used by upstream's Linux CI and keeps both the desktop client and
+# remote server runnable on their documented baseline distributions.
+export npm_config_arch=x64
+export VSCODE_ARCH=x64
+export ELECTRON_SKIP_BINARY_DOWNLOAD=1
+export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+source ./build/azure-pipelines/linux/setup-env.sh
 if [[ ${1:-} != --skip-install ]]; then
 	npm ci 2>&1 | tee .personal-build/logs/npm-ci.log
 	npm ci --prefix .personal-build/verifier --ignore-scripts --no-audit --no-fund

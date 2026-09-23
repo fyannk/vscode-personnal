@@ -82,6 +82,7 @@ jobs:
           code-personal --version | tee deb-version.log
           test "$(sed -n '2p' deb-version.log)" = "$(jq -r .upstreamCommit dist/build-info.json)"
           test -u /opt/code-personal/chrome-sandbox
+          node overlay/installed-runtime-check.mjs /opt/code-personal
           sudo apt-get remove --yes code-personal
           test ! -e /usr/bin/code-personal
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

@@ -26,6 +26,9 @@ Local builds default to the exact tag/commit in `upstream.json`. To select anoth
 ```
 
 The container installs Arch dependencies and builds as an unprivileged user.
+Linux native modules use upstream VS Code's pinned glibc 2.28 sysroots and
+compiler environment, so the rolling Arch build host does not leak a newer ABI
+into the desktop or remote-server artifacts.
 The exact Node version from upstream `.nvmrc` is downloaded and its official SHA-256
 checksum checked. `./scripts/build.sh` also works natively with the dependencies
 listed in `Dockerfile`; close existing Code Personal windows before its smoke test.
@@ -47,10 +50,11 @@ pushes to `main`, and on manual dispatch. It:
    and bundled Copilot manifest/runtime files.
 5. Launches the desktop under Xvfb, installs a real Open VSX extension with signature
    checks enabled, and requires an altered VSIX to fail verification.
-6. Produces the Arch and Debian/Ubuntu packages, application archive, checksums and
-   source provenance.
-7. Installs the Debian package on the Ubuntu 24.04 runner, checks its launcher and
-   version, then removes it.
+6. Audits every native Node add-on against the glibc 2.28 / GLIBCXX 3.4.25
+   baseline, then produces the Arch and Debian/Ubuntu packages, application
+   archive, checksums and source provenance.
+7. Installs the Debian package on the Ubuntu 24.04 runner, checks its launcher,
+   version, SQLite state store and terminal PTY native modules, then removes it.
 8. Publishes assets to this private repository's **Releases** only after checks pass.
 
 Release tags are `personal-v<VS_CODE_VERSION>-r<PACKAGE_REVISION>`. Bump
