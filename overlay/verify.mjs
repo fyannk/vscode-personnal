@@ -50,7 +50,10 @@ assert.equal(remoteSSH.displayName, 'Code Personal Remote - SSH');
 accessSync(path.join(remoteSSHDir, 'lib/extension.js'));
 accessSync(path.join(remoteSSHDir, 'src/scripts/server-setup.sh'));
 assert.match(readFileSync(path.join(remoteSSHDir, 'lib/extension.js'), 'utf8'), /No Code Personal server download URL is configured/);
-const runtime = path.join(app, 'node_modules.asar.unpacked/@github/copilot-linux-x64');
+// 1.139 moved the agent-host runtime from @github/copilot-linux-x64 to @github/copilot-sdk-linux-x64.
+const runtimes = ['@github/copilot-sdk-linux-x64', '@github/copilot-linux-x64'].map(name => path.join(app, 'node_modules.asar.unpacked', name)).filter(dir => existsSync(dir));
+assert.equal(runtimes.length, 1, `Exactly one bundled Copilot runtime package, found ${runtimes.join(', ') || 'none'}`);
+const [runtime] = runtimes;
 // The desktop bundles register the user setting and must carry the patched default.
 for (const bundle of [path.join(app, 'out/main.js'), path.join(app, 'out/vs/workbench/workbench.desktop.main.js')]) {
 	const match = readFileSync(bundle, 'utf8').match(/\[TELEMETRY_SETTING_ID\]: \{[^]*?"default": "(\w+)"/);
@@ -63,6 +66,12 @@ accessSync(path.join(runtime, 'package.json'));
 accessSync(path.join(runtime, 'prebuilds/linux-x64/runtime.node'));
 accessSync(path.join(runtime, 'ripgrep/bin/linux-x64/rg'), constants.X_OK);
 accessSync(path.join(copilotDir, 'dist/copilotCLIShim.js'));
+// The built-in extension's own SDK copy: its JavaScript survives packaging only with the
+// customized build/.moduleignore; the native module and ripgrep are materialized afterwards.
+const extensionSdk = path.join(copilotDir, 'node_modules/@github/copilot/sdk');
+accessSync(path.join(extensionSdk, 'index.js'));
+accessSync(path.join(extensionSdk, 'prebuilds/linux-x64/runtime.node'));
+accessSync(path.join(extensionSdk, 'ripgrep/bin/linux-x64/rg'), constants.X_OK);
 for (const application of [app, remoteServer]) {
 	const verifierDir = path.join(application, 'node_modules/@vscode/vsce-sign');
 	assert.equal(json(path.join(verifierDir, 'package.json')).codePersonalVerifier, 'node-ovsx-sign@1.2.0');

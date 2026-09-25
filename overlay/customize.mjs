@@ -5,6 +5,7 @@ import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { patchModuleIgnore } from './moduleignore.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const productPath = path.join(root, 'product.json');
@@ -27,6 +28,10 @@ const telemetry = readFileSync(telemetryPath, 'utf8');
 const telemetryDefault = "'default': TelemetryConfiguration.ON,";
 assert.equal(telemetry.split(telemetryDefault).length, 2, 'Exactly one telemetry level default to patch');
 writeFileSync(telemetryPath, telemetry.replace(telemetryDefault, "'default': TelemetryConfiguration.OFF,"));
+// Keep the built-in Copilot extension's SDK when it is compiled from source; see moduleignore.mjs.
+const moduleIgnorePath = path.join(root, 'build/.moduleignore');
+const moduleIgnore = patchModuleIgnore(readFileSync(moduleIgnorePath, 'utf8'));
+if (moduleIgnore.patched) { writeFileSync(moduleIgnorePath, moduleIgnore.text); }
 execFileSync('rsvg-convert', ['-w', '512', '-h', '512', '-o', path.join(root, 'resources/linux/code.png'), path.join(root, '.personal-build/assets/code-personal.svg')]);
 copyFileSync(path.join(root, '.personal-build/assets/code-personal.svg'), path.join(root, 'src/vs/workbench/browser/media/code-icon.svg'));
-console.log('Applied Code Personal identity, matching remote-server download URL, Open VSX gallery, telemetry-off default, and desktop/titlebar icons.');
+console.log(`Applied Code Personal identity, matching remote-server download URL, Open VSX gallery, telemetry-off default, desktop/titlebar icons, and ${moduleIgnore.patched ? 'a patched' : 'the upstream'} build/.moduleignore for the built-in Copilot SDK.`);
