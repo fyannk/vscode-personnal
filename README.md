@@ -178,6 +178,12 @@ Use a Linux x64 archive for Linux x64 hosts; other architectures are not built y
   telemetry endpoint or crash upload URL, but bundled Copilot reports usage to
   GitHub unless this setting is `off`; users can still opt in. The patch and
   `verify.mjs` fail the build if upstream moves the setting.
+- `overlay/moduleignore.mjs`: since VS Code 1.139, upstream's `build/.moduleignore`
+  strips all of `@github/copilot/**`. That is right for the application root, which
+  now bundles `@github/copilot-sdk`, but the same file filters the built-in Copilot
+  extension when it is compiled from source and removed the SDK the extension needs,
+  failing `prepareBuiltInCopilotRipgrepShim`. `customize.mjs` restores the targeted
+  rules for that package; `verify.mjs` checks the packaged extension keeps its SDK.
 - `overlay/assets/code-personal.svg`: editable icon for desktop PNG and titlebar SVG.
 - `overlay/verifier/`: pinned `node-ovsx-sign` and its API adapter.
   `package-verifier.mjs` bundles the runtime/license notices without modifying
