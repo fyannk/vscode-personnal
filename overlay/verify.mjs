@@ -5,6 +5,7 @@ import { accessSync, constants, existsSync, readFileSync, statSync, mkdirSync, w
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { telemetryDefault } from './telemetry-default.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.resolve(root, '../VSCode-linux-x64');
@@ -56,8 +57,7 @@ assert.equal(runtimes.length, 1, `Exactly one bundled Copilot runtime package, f
 const [runtime] = runtimes;
 // The desktop bundles register the user setting and must carry the patched default.
 for (const bundle of [path.join(app, 'out/main.js'), path.join(app, 'out/vs/workbench/workbench.desktop.main.js')]) {
-	const match = readFileSync(bundle, 'utf8').match(/\[TELEMETRY_SETTING_ID\]: \{[^]*?"default": "(\w+)"/);
-	assert.equal(match?.[1], 'off', `telemetry.telemetryLevel default in ${bundle}`);
+	assert.equal(telemetryDefault(readFileSync(bundle, 'utf8')), 'off', `telemetry.telemetryLevel default in ${bundle}`);
 }
 // The remote agent does not register the desktop setting schema; its launcher
 // explicitly disables telemetry instead.
