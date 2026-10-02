@@ -12,4 +12,5 @@ test('reads unquoted telemetry defaults', () => {
 
 test('does not match unrelated defaults', () => {
 	assert.equal(telemetryDefault('x: { "default": "on" }'), undefined);
+	assert.equal(telemetryDefault('x[TELEMETRY_SETTING_ID]: {}, unrelated: { default: "off" }'), undefined);
 });
