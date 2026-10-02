@@ -29,6 +29,16 @@ test('reads the previous gulp bundle format', () => {
 	assert.equal(telemetryDefault(`[TELEMETRY_SETTING_ID]: { 'type': 'string', 'enum': ['all', 'error', 'crash', 'off'], 'default': 'all' }`), 'all');
 });
 
+test('reads bundles that keep the enum object', () => {
+	const bundle = `[TELEMETRY_SETTING_ID]: {
+	"enum": [TelemetryConfiguration2.ON, TelemetryConfiguration2.ERROR, TelemetryConfiguration2.CRASH, TelemetryConfiguration2.OFF],
+	${descriptions}
+	"default": TelemetryConfiguration2.OFF,
+}`;
+	assert.equal(telemetryDefault(bundle), 'off');
+	assert.equal(telemetryDefault('{enum:[t.ON,t.ERROR,t.CRASH,t.OFF],default:t.ON}'), 'all');
+});
+
 test('reports every occurrence and rejects conflicting defaults', () => {
 	const setting = level => `{enum:["all","error","crash","off"],default:"${level}"}`;
 	assert.deepEqual(telemetryDefaults(setting('off') + setting('all')), ['off', 'all']);
