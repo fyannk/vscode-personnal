@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root.
 import assert from 'node:assert/strict';
-import { accessSync, constants, existsSync, readFileSync, statSync, mkdirSync, writeFileSync } from 'node:fs';
+import { accessSync, constants, existsSync, readdirSync, readFileSync, statSync, mkdirSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -55,11 +55,20 @@ assert.match(readFileSync(path.join(remoteSSHDir, 'lib/extension.js'), 'utf8'), 
 const runtimes = ['@github/copilot-sdk-linux-x64', '@github/copilot-linux-x64'].map(name => path.join(app, 'node_modules.asar.unpacked', name)).filter(dir => existsSync(dir));
 assert.equal(runtimes.length, 1, `Exactly one bundled Copilot runtime package, found ${runtimes.join(', ') || 'none'}`);
 const [runtime] = runtimes;
-// The desktop bundles register the user setting and must carry the patched default.
-for (const bundle of [path.join(app, 'out/main.js'), path.join(app, 'out/vs/workbench/workbench.desktop.main.js')]) {
-	const defaults = telemetryDefaults(readFileSync(bundle, 'utf8'));
-	assert.ok(defaults.length > 0 && defaults.every(level => level === 'off'), `telemetry.telemetryLevel default in ${bundle}: expected off, found ${JSON.stringify(defaults)}`);
+// The main process and the workbench both register the user setting and must carry the
+// patched default. Since 1.140 out/main.js is only a bootstrap: out/mainImpl.js imports the
+// main process from out/vs/code/electron-main/main.js. Accept any of these layouts, and
+// sweep every shipped script so no other registration keeps a different default.
+const out = path.join(app, 'out');
+const scripts = readdirSync(out, { recursive: true, encoding: 'utf8' }).filter(file => file.endsWith('.js')).map(file => path.join(out, file));
+const registrations = new Map(scripts.map(file => [file, telemetryDefaults(readFileSync(file, 'utf8'))]).filter(([, defaults]) => defaults.length > 0));
+for (const [file, defaults] of registrations) {
+	assert.ok(defaults.every(level => level === 'off'), `telemetry.telemetryLevel default in ${file}: expected off, found ${JSON.stringify(defaults)}`);
 }
+const registered = paths => paths.map(file => path.join(out, file)).some(file => registrations.has(file));
+const found = JSON.stringify([...registrations.keys()].map(file => path.relative(out, file)));
+assert.ok(registered(['vs/code/electron-main/main.js', 'mainImpl.js', 'main.js']), `telemetry.telemetryLevel registration in the main process bundle, found in ${found}`);
+assert.ok(registered(['vs/workbench/workbench.desktop.main.js']), `telemetry.telemetryLevel registration in the workbench bundle, found in ${found}`);
 // The remote agent does not register the desktop setting schema; its launcher
 // explicitly disables telemetry instead.
 assert.match(readFileSync(path.join(remoteSSHDir, 'src/scripts/server-setup.sh'), 'utf8'), /--telemetry-level off/);
