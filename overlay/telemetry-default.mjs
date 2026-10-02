@@ -4,7 +4,9 @@
 // them. Const enum members are usually inlined as strings, optionally followed
 // by a `/* ON */` comment, but a bundler that keeps the enum object emits
 // `TelemetryConfiguration.ON`; both forms are accepted. The default must
-// follow in the same object literal.
+// follow in the same object literal, after `enumDescriptions`: that tells the
+// user setting apart from the agent host's internal schema (1.140+), which
+// reuses the enum without descriptions and stays at the clients' level.
 const levels = { ON: 'all', ERROR: 'error', CRASH: 'crash', OFF: 'off' };
 const comment = String.raw`(?:\s*\/\*[^*]*\*\/)?\s*`;
 const key = name => String.raw`(?:["']${name}["']|\b${name})\s*:\s*`;
@@ -15,7 +17,7 @@ const level = (member, capture) => {
 };
 const telemetryDefaultPattern = new RegExp(
 	key('enum') + String.raw`\[\s*` + Object.keys(levels).map(member => level(member, false)).join(String.raw`,\s*`) + String.raw`,?\s*\]` +
-	String.raw`[^{}]*?` + key('default') + level(undefined, true),
+	String.raw`[^{}]*?` + key('enumDescriptions') + String.raw`[^{}]*?` + key('default') + level(undefined, true),
 	'g'
 );
 

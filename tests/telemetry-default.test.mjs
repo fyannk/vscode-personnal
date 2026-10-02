@@ -26,7 +26,7 @@ test('reads minified bundles', () => {
 });
 
 test('reads the previous gulp bundle format', () => {
-	assert.equal(telemetryDefault(`[TELEMETRY_SETTING_ID]: { 'type': 'string', 'enum': ['all', 'error', 'crash', 'off'], 'default': 'all' }`), 'all');
+	assert.equal(telemetryDefault(`[TELEMETRY_SETTING_ID]: { 'type': 'string', 'enum': ['all', 'error', 'crash', 'off'], 'enumDescriptions': [localize('a', "x")], 'default': 'all' }`), 'all');
 });
 
 test('reads bundles that keep the enum object', () => {
@@ -36,13 +36,25 @@ test('reads bundles that keep the enum object', () => {
 	"default": TelemetryConfiguration2.OFF,
 }`;
 	assert.equal(telemetryDefault(bundle), 'off');
-	assert.equal(telemetryDefault('{enum:[t.ON,t.ERROR,t.CRASH,t.OFF],default:t.ON}'), 'all');
+	assert.equal(telemetryDefault('{enum:[t.ON,t.ERROR,t.CRASH,t.OFF],enumDescriptions:[],default:t.ON}'), 'all');
 });
 
 test('reports every occurrence and rejects conflicting defaults', () => {
-	const setting = level => `{enum:["all","error","crash","off"],default:"${level}"}`;
+	const setting = level => `{enum:["all","error","crash","off"],enumDescriptions:[],default:"${level}"}`;
 	assert.deepEqual(telemetryDefaults(setting('off') + setting('all')), ['off', 'all']);
 	assert.equal(telemetryDefault(setting('off') + setting('all')), undefined);
+});
+
+test('ignores the agent host telemetry level schema', () => {
+	const agentHost = `[AgentHostTelemetryLevelConfigKey]: schemaProperty({
+	type: "string",
+	title: localize(7, null),
+	description: localize(8, null),
+	enum: ["all" /* ON */, "error" /* ERROR */, "crash" /* CRASH */, "off" /* OFF */],
+	default: "all" /* ON */
+})`;
+	assert.deepEqual(telemetryDefaults(agentHost), []);
+	assert.deepEqual(telemetryDefaults('[e]:{type:"string",enum:["all","error","crash","off"],enumDescriptions:[n(1,null)],default:"off"},' + agentHost), ['off']);
 });
 
 test('does not match unrelated defaults', () => {
