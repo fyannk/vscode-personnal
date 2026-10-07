@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { accessSync, constants, existsSync, readdirSync, readFileSync, statSync, mkdirSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { createPublicKey } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { telemetryDefaults } from './telemetry-default.mjs';
@@ -85,6 +86,9 @@ accessSync(path.join(extensionSdk, 'ripgrep/bin/linux-x64/rg'), constants.X_OK);
 for (const application of [app, remoteServer]) {
 	const verifierDir = path.join(application, 'node_modules/@vscode/vsce-sign');
 	assert.equal(json(path.join(verifierDir, 'package.json')).codePersonalVerifier, 'node-ovsx-sign@1.2.0');
+	const bundledKey = json(path.join(verifierDir, 'package.json')).codePersonalPublicKey;
+	assert.match(bundledKey?.source ?? '', /^https:\/\/open-vsx\.org\//, 'Bundled Open VSX signing key source');
+	createPublicKey(readFileSync(path.join(verifierDir, bundledKey.file), 'utf8'));
 	assert.equal(typeof (await import(pathToFileURL(path.join(verifierDir, 'index.cjs')).href)).verify, 'function');
 	accessSync(path.join(verifierDir, 'ThirdPartyNotices.txt'));
 }
