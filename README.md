@@ -187,7 +187,13 @@ Use a Linux x64 archive for Linux x64 hosts; other architectures are not built y
 - `overlay/assets/code-personal.svg`: editable icon for desktop PNG and titlebar SVG.
 - `overlay/verifier/`: pinned `node-ovsx-sign` and its API adapter.
   `package-verifier.mjs` bundles the runtime/license notices without modifying
-  upstream package files or disabling verification.
+  upstream package files or disabling verification. It also bundles Open VSX's
+  current signing key (`open-vsx-public.pem`): `node-ovsx-sign` otherwise fetches
+  the key with plain `node-fetch` during every install, which ignores VS Code's
+  proxy settings and fails with `ENOTFOUND` on hosts without a direct network
+  path. The adapter verifies with the bundled key first and asks the registry only
+  when that key rejects a signature, so a rotated key still verifies where the
+  registry is reachable and otherwise needs a rebuild.
 - `overlay/arch/PKGBUILD.in`: package layout; revision comes from `config.json`.
 - `overlay/debian/control.in` and `overlay/deb-package.mjs`: the Debian package, built
   with `dpkg-deb` inside the Arch container from the same verified application tree

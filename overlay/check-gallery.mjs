@@ -35,17 +35,22 @@ try {
 		assert.ok(file.ok);
 		writeFileSync(path.join(temporary, filename), Buffer.from(await file.arrayBuffer()));
 	}
-	const { verify } = await import(pathToFileURL(path.join(output, 'resources/app/node_modules/@vscode/vsce-sign/index.cjs')).href);
+	const { verify, createVerifier } = await import(pathToFileURL(path.join(output, 'resources/app/node_modules/@vscode/vsce-sign/index.cjs')).href);
 	const original = path.join(temporary, 'original.vsix');
 	const signature = path.join(temporary, 'original.sigzip');
 	const valid = await verify(original, signature);
 	assert.equal(valid.code, 'Success');
+	assert.equal(valid.publicKeySource, 'bundled', 'The bundled Open VSX key must verify a current extension without contacting the registry');
+	// The registry path remains the fallback for a rotated signing key.
+	const registryVerified = await createVerifier({})(original, signature);
+	assert.equal(registryVerified.code, 'Success');
+	assert.equal(registryVerified.publicKeySource, 'registry');
 	// Change only the ZIP comment so parsing still succeeds and the cryptographic check rejects it.
 	execFileSync('python3', ['-c', 'import shutil,sys,zipfile; shutil.copyfile(sys.argv[1],sys.argv[2]); z=zipfile.ZipFile(sys.argv[2],"a"); z.comment=b"tampered"; z.close()', original, path.join(temporary, 'tampered.vsix')]);
 	const tampered = await verify(path.join(temporary, 'tampered.vsix'), signature);
 	assert.notEqual(tampered.code, 'Success');
 	assert.equal(tampered.didExecute, true);
-	writeFileSync(path.join(logs, 'gallery-verification.json'), JSON.stringify({ extension, version, valid, tampered, galleryInstall: 'passed', result: 'passed' }, null, 2) + '\n');
+	writeFileSync(path.join(logs, 'gallery-verification.json'), JSON.stringify({ extension, version, valid, registryVerified, tampered, galleryInstall: 'passed', result: 'passed' }, null, 2) + '\n');
 	console.log('Gallery installation and valid/tampered signature checks passed.');
 } catch (error) {
 	if (error.stdout) { writeFileSync(path.join(logs, 'gallery-install.log'), error.stdout); }
