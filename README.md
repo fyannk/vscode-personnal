@@ -79,7 +79,9 @@ polling, not an instant upstream release webhook; GitHub may delay scheduled run
 No PAT or additional secret is needed. The build job has read access; only a separate
 publication job has write access. Checkout does not persist credentials, and no
 GitHub token is passed into the build container. Actions/base image are pinned;
-Dependabot proposes updates for Actions, Docker and verifier dependencies.
+Dependabot proposes updates for Actions, Docker and verifier dependencies; the
+`merge-dependabot` job in `checks.yml` merges them once the checks pass, leaving
+major verifier dependency updates for review.
 
 References: [workflow triggers](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows),
 [upstream build guide](https://github.com/microsoft/vscode/wiki/How-to-Contribute),

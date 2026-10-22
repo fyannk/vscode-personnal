@@ -15,3 +15,30 @@ jobs:
       - run: npm test
       - run: bash -n scripts/*.sh overlay/*.sh
       - run: python3 -m py_compile scripts/prepare.py
+  merge-dependabot:
+    # Dependabot only proposes pinned bumps of Actions, the Arch base image digest
+    # and the verifier's npm dependencies. Merge them once the checks pass, except a
+    # major update of a verifier dependency, which can change the verification
+    # contract and stays for review. The merge uses the workflow token, so it does
+    # not start a release build; the next scheduled or upstream-release run uses
+    # the merged change.
+    needs: checks
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ' ') }}
+    steps:
+      - run: |
+          if [[ " $PR_LABELS " == *' npm '* ]]; then
+            if [[ ! $PR_TITLE =~ \ from\ ([0-9]+)\.[0-9]+\.[0-9]+\ to\ ([0-9]+)\.[0-9]+\.[0-9]+ ]] || [[ ${BASH_REMATCH[1]} != "${BASH_REMATCH[2]}" ]]; then
+              echo "Leaving a major or unrecognized verifier dependency update for review: $PR_TITLE"
+              exit 0
+            fi
+          fi
+          gh pr merge --rebase --delete-branch "$PR_URL"
