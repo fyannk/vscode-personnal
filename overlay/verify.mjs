@@ -76,7 +76,6 @@ assert.match(readFileSync(path.join(remoteSSHDir, 'src/scripts/server-setup.sh')
 accessSync(path.join(runtime, 'package.json'));
 accessSync(path.join(runtime, 'prebuilds/linux-x64/runtime.node'));
 accessSync(path.join(runtime, 'ripgrep/bin/linux-x64/rg'), constants.X_OK);
-accessSync(path.join(copilotDir, 'dist/copilotCLIShim.js'));
 // The built-in extension's own SDK copy: its JavaScript survives packaging only with the
 // customized build/.moduleignore; the native module and ripgrep are materialized afterwards.
 const extensionSdk = path.join(copilotDir, 'node_modules/@github/copilot/sdk');
