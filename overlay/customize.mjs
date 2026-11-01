@@ -20,6 +20,14 @@ assert.match(String(buildInfo.packageRevision), /^[1-9][0-9]*$/, 'Expected posit
 // on the same published Code Personal release; do not fall back to another product.
 product.serverDownloadUrlTemplate = `https://github.com/${buildInfo.remoteServerReleaseRepository}/releases/download/personal-v\${version}-r${buildInfo.packageRevision}/code-personal-server-\${version}-\${os}-\${arch}.tar.gz`;
 writeFileSync(productPath, JSON.stringify(product, null, '\t') + '\n');
+// Upstream only changes this during its Copilot CI publishing build. Local source
+// builds otherwise retain "dev" and try to load unshipped source-map-support/dotenv.
+// Set it before compilation: Copilot also bundles this manifest into its runtime.
+const copilotPackagePath = path.join(root, 'extensions/copilot/package.json');
+const copilotPackage = JSON.parse(readFileSync(copilotPackagePath, 'utf8'));
+assert.ok(['dev', 'prod'].includes(copilotPackage.buildType), 'Reinspect upstream Copilot buildType');
+copilotPackage.buildType = 'prod';
+writeFileSync(copilotPackagePath, JSON.stringify(copilotPackage, null, '\t') + '\n');
 // Default telemetry to off. OSS ships no telemetry endpoint, but bundled Copilot
 // honours this setting, and it cannot be defaulted from product.json or an extension
 // because the setting is application-scoped. Users may still opt in.

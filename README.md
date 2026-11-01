@@ -111,6 +111,13 @@ own `.deb` runtime dependencies and is verified to install on Ubuntu 22.04 and 2
 Fully close and reopen Code Personal after updates; Reload Window can retain an old
 icon or cached shared-process module.
 
+Taskbar badge counts and progress require `libunity` with the bundled Electron
+runtime. The Debian/Ubuntu package installs `libunity9` automatically. On Arch,
+`libunity` is an optional dependency available through the AUR; install it separately
+and fully restart Code Personal to enable badges on compatible desktops such as KDE
+Plasma. Desktop notification popups work independently. The application archive
+does not install system dependencies.
+
 CI publishes packages; it does **not** install updates on your computer. Roll back
 with `sudo pacman -U` or `sudo apt install ./…` on a saved package. Uninstall with
 `sudo pacman -R code-personal` or `sudo apt remove code-personal`; your personal
@@ -168,14 +175,19 @@ Use a Linux x64 archive for Linux x64 hosts; other architectures are not built y
 ## Maintain the customization
 
 - `overlay/product-overrides.json`: identity, Open VSX endpoints, and the narrow
-  proposed-API allow-list for bundled Code Personal Remote - SSH. It permits only
-  `code-personal.code-personal-remote-ssh` to use the two remote APIs it declares;
-  do not add unrelated extensions or proposals without reviewing their manifests.
+  proposed-API allow-list for bundled Code Personal Remote - SSH and Codex.
+  `code-personal.code-personal-remote-ssh` gets `resolvers` and `contribViewsRemote`;
+  `openai.chatgpt` gets `chatSessionsProvider` and `languageModelProxy`, so its UI
+  works without a launch flag. Review manifests before adding other proposals.
 - `overlay/remote-ssh/`: vendored MIT source for Code Personal Remote - SSH,
   derived from Open Remote - SSH 0.3.1. Its server resolver is branded and refuses
   to fall back to any other distribution. Keep the upstream attribution and licenses
   when updating it.
 - `overlay/customize.mjs`: applies the overrides and patches the upstream
+  Copilot manifest to `buildType: "prod"` before compilation. Upstream's local source
+  build otherwise retains `dev` and tries to load development-only dependencies
+  (`source-map-support` and `dotenv`) that are absent from the shipped package.
+  It also patches the upstream
   `telemetry.telemetryLevel` default to `off`. VS Code OSS has no Microsoft
   telemetry endpoint or crash upload URL, but bundled Copilot reports usage to
   GitHub unless this setting is `off`; users can still opt in. The patch and
@@ -200,8 +212,9 @@ Use a Linux x64 archive for Linux x64 hosts; other architectures are not built y
 - `overlay/debian/control.in` and `overlay/deb-package.mjs`: the Debian package, built
   with `dpkg-deb` inside the Arch container from the same verified application tree
   and layout. Its `Depends` come from upstream's `build/linux/debian/dep-lists.ts`
-  (the reference list behind Microsoft's own `.deb`), plus `libsecret` and Kerberos
-  like the Arch package. No maintainer scripts: dpkg triggers refresh the desktop
+  (the reference list behind Microsoft's own `.deb`), plus `libsecret`, Kerberos and
+  `libunity9` for Electron's dynamically loaded taskbar badge integration.
+  No maintainer scripts: dpkg triggers refresh the desktop
   and icon databases.
 - `scripts/`: preparation, build environment, release planning and artifact collection.
 - `tests/`: release-planning tests. Run `npm test` with Node 22 or newer.

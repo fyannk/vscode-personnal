@@ -44,6 +44,7 @@ assert.equal(`${copilot.publisher}.${copilot.name}`, product.defaultChatAgent.ch
 const entry = path.resolve(copilotDir, copilot.main);
 assert.ok([entry, `${entry}.js`].some(file => existsSync(file) && statSync(file).size > 0), 'Copilot entry point');
 assert.ok(copilot.enabledApiProposals.length > 0, 'Copilot proposed APIs');
+assert.equal(copilot.buildType, 'prod', 'Packaged Copilot must not load development-only dependencies');
 accessSync(path.join(app, 'extensions/github-authentication/package.json'));
 const remoteSSHDir = path.join(app, 'extensions/code-personal.remote-ssh');
 const remoteSSH = json(path.join(remoteSSHDir, 'package.json'));
@@ -83,6 +84,7 @@ accessSync(path.join(extensionSdk, 'index.js'));
 accessSync(path.join(extensionSdk, 'prebuilds/linux-x64/runtime.node'));
 accessSync(path.join(extensionSdk, 'ripgrep/bin/linux-x64/rg'), constants.X_OK);
 for (const application of [app, remoteServer]) {
+	assert.deepEqual(json(path.join(application, 'product.json')).extensionEnabledApiProposals['openai.chatgpt'], ['chatSessionsProvider', 'languageModelProxy'], 'Codex proposed APIs');
 	const verifierDir = path.join(application, 'node_modules/@vscode/vsce-sign');
 	assert.equal(json(path.join(verifierDir, 'package.json')).codePersonalVerifier, 'node-ovsx-sign@1.2.0');
 	const bundledKey = json(path.join(verifierDir, 'package.json')).codePersonalPublicKey;

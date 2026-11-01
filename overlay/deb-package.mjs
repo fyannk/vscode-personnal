@@ -17,7 +17,9 @@ const revision = JSON.parse(readFileSync(path.join(overlay, 'build-info.json'), 
 if (!Number.isSafeInteger(revision) || revision < 1) { throw new Error('Invalid package revision'); }
 // Upstream's dpkg-shlibdeps reference list, the Depends of its own .deb; the Arch container has no Debian sysroot to regenerate it.
 const { referenceGeneratedDepsByArch, recommendedDeps } = await import(pathToFileURL(path.join(root, 'build/linux/debian/dep-lists.ts')));
-const depends = [...new Set([...referenceGeneratedDepsByArch.amd64, 'libsecret-1-0', 'libgssapi-krb5-2'])];
+// Electron loads libunity dynamically for launcher badges/progress, so shlibdeps
+// cannot discover it from the executable's linked libraries.
+const depends = [...new Set([...referenceGeneratedDepsByArch.amd64, 'libsecret-1-0', 'libgssapi-krb5-2', 'libunity9'])];
 assert.ok(depends.some(dep => dep.startsWith('libnss3')) && depends.some(dep => dep.startsWith('libgtk-3-0')), 'Upstream Debian dependency list');
 
 const name = `code-personal_${version}-${revision}_amd64`;
@@ -64,6 +66,8 @@ writeFileSync(path.join(overlay, 'logs/deb.log'), info + contents);
 assert.match(info, /^ Package: code-personal$/m);
 assert.match(info, new RegExp(`^ Version: ${version.replaceAll('.', '\\.')}-${revision}$`, 'm'));
 assert.match(info, /^ Architecture: amd64$/m);
+const packagedDepends = execFileSync('dpkg-deb', ['--field', deb, 'Depends'], { encoding: 'utf8' });
+assert.ok(packagedDepends.trim().split(/,\s*/).includes('libunity9'), 'Taskbar badge runtime dependency');
 assert.match(contents, /^-rwsr-xr-x root\/root .* \.\/opt\/code-personal\/chrome-sandbox$/m, 'Setuid sandbox owned by root');
 assert.match(contents, /^lrwxrwxrwx root\/root .* \.\/usr\/bin\/code-personal -> \/opt\/code-personal\/bin\/code-personal$/m);
 for (const entry of ['./opt/code-personal/code-personal', './opt/code-personal/bin/code-personal', './opt/code-personal/resources/app/product.json', './usr/share/applications/code-personal.desktop', './usr/share/applications/code-personal-url-handler.desktop', './usr/share/icons/hicolor/scalable/apps/code-personal.svg', './usr/share/icons/hicolor/512x512/apps/code-personal.png', './usr/share/doc/code-personal/copyright']) {
