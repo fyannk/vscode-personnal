@@ -37,6 +37,15 @@ assert.deepEqual(readFileSync(path.join(app, 'resources/linux/code.png')), readF
 for (const icon of ['out/media/code-icon.svg', 'out/vs/workbench/browser/media/code-icon.svg']) {
 	assert.deepEqual(readFileSync(path.join(app, icon)), readFileSync(path.join(root, '.personal-build/assets/code-personal.svg')), `Personal workbench icon: ${icon}`);
 }
+// The bundler may place CSS-referenced media in more than one directory; every copy must be the ermine.
+for (const theme of ['dark', 'light', 'hcDark', 'hcLight']) {
+	const name = `letterpress-${theme}.svg`;
+	const copies = readdirSync(path.join(app, 'out'), { recursive: true, encoding: 'utf8' }).filter(file => path.basename(file) === name);
+	assert.ok(copies.length > 0, `Packaged editor watermark: ${name}`);
+	for (const file of copies) {
+		assert.deepEqual(readFileSync(path.join(app, 'out', file)), readFileSync(path.join(root, '.personal-build/assets', name)), `Personal editor watermark: out/${file}`);
+	}
+}
 assert.notDeepEqual(readFileSync(path.join(app, 'resources/linux/code.png')), execFileSync('git', ['show', `${baseline.commit}:resources/linux/code.png`], { cwd: root }));
 const copilotDir = path.join(app, 'extensions/copilot');
 const copilot = json(path.join(copilotDir, 'package.json'));

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root.
 import assert from 'node:assert/strict';
-import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -42,4 +42,10 @@ const moduleIgnore = patchModuleIgnore(readFileSync(moduleIgnorePath, 'utf8'));
 if (moduleIgnore.patched) { writeFileSync(moduleIgnorePath, moduleIgnore.text); }
 execFileSync('rsvg-convert', ['-w', '512', '-h', '512', '-o', path.join(root, 'resources/linux/code.png'), path.join(root, '.personal-build/assets/code-personal.svg')]);
 copyFileSync(path.join(root, '.personal-build/assets/code-personal.svg'), path.join(root, 'src/vs/workbench/browser/media/code-icon.svg'));
-console.log(`Applied Code Personal identity, matching remote-server download URL, Open VSX gallery, telemetry-off default, desktop/titlebar icons, and ${moduleIgnore.patched ? 'a patched' : 'the upstream'} build/.moduleignore for the built-in Copilot SDK.`);
+// Empty-editor watermark: the fyannk ermine instead of the upstream letterpress.
+for (const theme of ['dark', 'light', 'hcDark', 'hcLight']) {
+	const target = path.join(root, `src/vs/workbench/browser/parts/editor/media/letterpress-${theme}.svg`);
+	assert.ok(existsSync(target), `Reinspect upstream letterpress: ${target}`);
+	copyFileSync(path.join(root, `.personal-build/assets/letterpress-${theme}.svg`), target);
+}
+console.log(`Applied Code Personal identity, matching remote-server download URL, Open VSX gallery, telemetry-off default, desktop/titlebar icons, ermine editor watermark, and ${moduleIgnore.patched ? 'a patched' : 'the upstream'} build/.moduleignore for the built-in Copilot SDK.`);
