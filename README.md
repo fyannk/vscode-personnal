@@ -1,161 +1,88 @@
-# Code Personal
+<p align="center">
+  <img src="overlay/assets/code-personal.svg" width="112" alt="Code Personal: the fyannk ermine curled around a code mark">
+</p>
 
-An independent customization/packaging project for **upstream VS Code OSS stable**,
-with bundled upstream Copilot, Open VSX and a compatible signature verifier.
-The repository is `vscode-personnal`; the app/command remain **Code Personal** /
-**`code-personal`**.
+<h1 align="center"><code>Code Personal</code></h1>
 
-Only customizations are tracked. Builds fetch upstream into `.work/<version>/vscode`
-and produce `dist/` artifacts. Your existing VS Code checkout, WORK editor, profiles,
-credentials and extensions are never copied into this project.
+<p align="center">
+  Upstream VS Code OSS stable, packaged for my own machines.<br>
+  Bundled Copilot · Open VSX with signature checks · Remote SSH · telemetry off.
+</p>
 
-## Build locally
+<p align="center">
+  <code>code-personal</code> · Arch and Debian/Ubuntu · x64 ·
+  identity: <a href="https://github.com/fyannk/design">fyannk/design</a>
+</p>
 
-Use the disposable Arch container with Docker available to your normal user:
+---
 
-```bash
-git clone git@github.com:fyannk/vscode-personnal.git
-cd vscode-personnal
-./scripts/build-container.sh
-```
+This repository (`vscode-personnal`) tracks only the customization. Builds fetch
+upstream into `.work/<version>/vscode` and write packages to `dist/`. Nothing is
+copied from an existing VS Code install: no checkout, profile, credential or
+extension.
 
-Local builds default to the exact tag/commit in `upstream.json`. To select another:
+## Install
 
-```bash
-./scripts/build-container.sh --tag 1.136.1 --commit a44adf7f53e00964ab890f9f8758a334f1fc15bc
-```
-
-The container installs Arch dependencies and builds as an unprivileged user.
-Linux native modules use upstream VS Code's pinned glibc 2.28 sysroots and
-compiler environment, so the rolling Arch build host does not leak a newer ABI
-into the desktop or remote-server artifacts.
-The exact Node version from upstream `.nvmrc` is downloaded and its official SHA-256
-checksum checked. `./scripts/build.sh` also works natively with the dependencies
-listed in `Dockerfile`; close existing Code Personal windows before its smoke test.
-
-Allow roughly 25–35 GB of disk per build tree and substantial memory. CI adds an 8 GB swap
-on its disposable runner. `.work/<version>` is a generated cache, not a development
-checkout; remove that version directory when no longer needed. Rebuilding a version
-reuses its checkout and reapplies the overlay.
-
-## GitHub Actions
-
-**Build Code Personal releases** runs every six hours at minute 17, on relevant
-pushes to `main`, and on manual dispatch. It:
-
-1. Finds the latest stable `microsoft/vscode` release and resolves its exact commit.
-2. Skips an already published personal package revision; retries an unfinished draft.
-3. Builds inside Arch Linux. Missing Copilot or changed build assumptions fail the run.
-4. Verifies preserved upstream metadata, separate identity/storage, matching icons,
-   and bundled Copilot manifest/runtime files.
-5. Launches the desktop under Xvfb, installs a real Open VSX extension with signature
-   checks enabled, and requires an altered VSIX to fail verification.
-6. Audits every native Node add-on against the glibc 2.28 / GLIBCXX 3.4.25
-   baseline, then produces the Arch and Debian/Ubuntu packages, application
-   archive, checksums and source provenance.
-7. Installs the Debian package on the Ubuntu 24.04 runner, checks its launcher,
-   version, SQLite state store and terminal PTY native modules, then removes it.
-8. Publishes assets to this private repository's **Releases** only after checks pass.
-
-Release tags are `personal-v<VS_CODE_VERSION>-r<PACKAGE_REVISION>`. Bump
-`packageRevision` in `config.json` for a customization update to an already published
-VS Code version; it is the `pkgrel` of the Arch package and the Debian revision of the
-`.deb`. Keep previous packages for rollback.
-
-Scheduled builds follow the latest stable release; `upstream.json` remains the
-reviewed default for local builds. Every artifact includes `build-info.json` with
-both upstream and customization commits. Arch packages update inside the pinned
-base image: builds are traceable, not claimed to be byte-for-byte reproducible.
-
-To run manually: **Actions → Build Code Personal releases → Run workflow**.
-Choose `latest` or a numeric stable tag. Clear **publish** for a test-only build,
-even if that version is already released. The release artifact is deleted once
-its assets are uploaded (otherwise it expires after one day); failure logs are
-retained for seven days; release assets remain until deleted. Private Actions usage is subject
-to your GitHub account's allowance and billing settings.
-
-Actions must be enabled and the workflow present on the default branch. This is
-polling, not an instant upstream release webhook; GitHub may delay scheduled runs.
-No PAT or additional secret is needed. The build job has read access; only a separate
-publication job has write access. Checkout does not persist credentials, and no
-GitHub token is passed into the build container. Actions/base image are pinned;
-Dependabot proposes updates for Actions, Docker and verifier dependencies; the
-`merge-dependabot` job in `checks.yml` merges them once the checks pass, leaving
-major verifier dependency updates for review.
-
-References: [workflow triggers](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows),
-[upstream build guide](https://github.com/microsoft/vscode/wiki/How-to-Contribute),
-[Open VSX configuration](https://github.com/eclipse-openvsx/openvsx/wiki/Using-Open-VSX-in-VS-Code).
-
-## Install, update, or roll back
-
-Download the package for your distribution from **Releases**, or use your local
-`dist/` package.
-
-Arch Linux / CachyOS:
+Download a package from **Releases**, or use one from a local `dist/`.
 
 ```bash
+# Arch Linux / CachyOS
 sudo pacman -U ./code-personal-<version>-<revision>-x86_64.pkg.tar.zst
-```
 
-Ubuntu / Debian (the `./` prefix makes `apt` resolve dependencies from the file):
-
-```bash
+# Debian / Ubuntu (the ./ prefix lets apt resolve dependencies)
 sudo apt install ./code-personal_<version>-<revision>_amd64.deb
 ```
 
-Both packages install the same layout: `/opt/code-personal`, `/usr/bin/code-personal`,
-separate desktop entries and `code-personal` icons. They do not conflict with
-`visual-studio-code-bin`, `code` or `codium`. The Debian package declares upstream's
-own `.deb` runtime dependencies and is verified to install on Ubuntu 22.04 and 24.04.
-Fully close and reopen Code Personal after updates; Reload Window can retain an old
-icon or cached shared-process module.
+Both packages install `/opt/code-personal`, `/usr/bin/code-personal`, desktop
+entries and `code-personal` icons. They do not conflict with
+`visual-studio-code-bin`, `code` or `codium`. The `.deb` uses upstream's own runtime
+dependencies and is tested on Ubuntu 22.04 and 24.04.
 
-Taskbar badge counts and progress require `libunity` with the bundled Electron
-runtime. The Debian/Ubuntu package installs `libunity9` automatically. On Arch,
-`libunity` is an optional dependency available through the AUR; install it separately
-and fully restart Code Personal to enable badges on compatible desktops such as KDE
-Plasma. Desktop notification popups work independently. The application archive
-does not install system dependencies.
+**Update.** CI publishes packages; it does not install them. Install the new
+package, then fully quit and reopen. Reload Window can keep an old icon or a
+cached module.
 
-CI publishes packages; it does **not** install updates on your computer. Roll back
-with `sudo pacman -U` or `sudo apt install ./…` on a saved package. Uninstall with
-`sudo pacman -R code-personal` or `sudo apt remove code-personal`; your personal
-profile and extensions remain.
+**Roll back.** Keep previous packages and install one again with the same command.
+
+**Uninstall.** `sudo pacman -R code-personal` or `sudo apt remove code-personal`.
+Your profile and extensions stay.
+
+**Taskbar badges** (counts and progress) need `libunity`. The `.deb` installs
+`libunity9`. On Arch, install `libunity` from the AUR, then fully restart. Desktop
+notifications work without it. The plain application archive installs no system
+dependencies.
+
+### Where data lives
 
 | Data | Default path |
 | --- | --- |
 | Configuration and sessions | `~/.config/Code Personal` (or `$XDG_CONFIG_HOME/Code Personal`) |
 | Extensions | `~/.code-personal/extensions` |
 | Shared data | `~/.code-personal-shared` |
-| Server data identity | `~/.code-personal-server` |
+| Remote server data | `~/.code-personal-server` |
 | URL scheme | `code-personal://` |
 
-Upstream explicit path/environment overrides still apply; never point them at the
-WORK editor's storage.
+Upstream path and environment overrides still apply. Never point them at another
+editor's storage.
 
-## Open Remote SSH
+## Remote SSH
 
-Every release bundles **Code Personal Remote - SSH**, a branded adaptation of Open
-Remote - SSH. On first connection it downloads the matching **Code Personal remote
-server** archive from that same release—never a VSCodium or Microsoft VS Code server.
-Remote data and remote extensions live in `~/.code-personal-server`.
+Each release bundles **Code Personal Remote - SSH**, adapted from Open Remote - SSH.
+On first connection it downloads the **Code Personal remote server** from the same
+release. It never falls back to a VSCodium or Microsoft server.
 
-Use **Code Personal Remote - SSH: Connect to Host…**. The extension preserves the
-standard `remote.SSH.*` setting names, including
-`remote.SSH.serverDownloadUrlTemplate` for an intentional private mirror. A remote
-host that requires an HTTP(S) proxy should expose its usual `http_proxy` /
-`https_proxy` environment variables to a login shell; the installer runs through
-`bash -l`, so normal remote profile configuration is used.
+- Command: **Code Personal Remote - SSH: Connect to Host…**
+- Settings keep the standard `remote.SSH.*` names, including
+  `remote.SSH.serverDownloadUrlTemplate` for a private mirror.
+- The installer runs through `bash -l`. A host behind an HTTP(S) proxy should export
+  `http_proxy` / `https_proxy` from its login profile.
+- Remote authority is `code-personal-ssh`, separate from Open Remote - SSH's
+  `ssh-remote`. After upgrading, reopen old `ssh-remote` windows with the Code
+  Personal command.
+- Linux x64 hosts only. Other architectures are not built yet.
 
-The bundled resolver uses the `code-personal-ssh` remote authority. This keeps it
-separate from a user-installed Open Remote - SSH extension, which owns
-`ssh-remote`; open existing `ssh-remote` windows again through the Code Personal
-command after upgrading.
-
-The release archive can still be installed manually on air-gapped hosts. Replace
-`HOST` with its SSH alias and use the commit on the second line of
-`code-personal --version`:
+**Air-gapped host.** Replace `HOST` with its SSH alias. The commit is the second
+line of `code-personal --version`.
 
 ```bash
 commit=$(code-personal --version | sed -n '2p')
@@ -163,82 +90,142 @@ scp code-personal-server-<version>-linux-x64.tar.gz HOST:/tmp/code-personal-serv
 ssh HOST "mkdir -p ~/.code-personal-server/bin/$commit && tar -xzf /tmp/code-personal-server.tar.gz --strip-components=1 -C ~/.code-personal-server/bin/$commit && rm /tmp/code-personal-server.tar.gz"
 ```
 
-Packaging includes the Open VSX verifier (`@vscode/vsce-sign`) in both the desktop
-and server payloads and checks that the server's Node runtime can import it.
-If an older server reports **Signature verification was not executed**, inspect
-its `data/logs/*/remoteagent.log` for `Could not load vsce-sign module`. Reinstall
-the corrected server archive, then restart the remote server before reconnecting:
-the running process caches a failed verifier import. Keep
-`extensions.verifySignature` enabled.
-Use a Linux x64 archive for Linux x64 hosts; other architectures are not built yet.
+**"Signature verification was not executed".** The server could not load
+`@vscode/vsce-sign`. Check `data/logs/*/remoteagent.log` for
+`Could not load vsce-sign module`, install the current server archive, and restart
+the remote server before reconnecting: a running server caches the failed import.
+Keep `extensions.verifySignature` enabled.
 
-## Maintain the customization
+## Build locally
 
-- `overlay/product-overrides.json`: identity, Open VSX endpoints, and the narrow
-  proposed-API allow-list for bundled Code Personal Remote - SSH and Codex.
-  `code-personal.code-personal-remote-ssh` gets `resolvers` and `contribViewsRemote`;
-  `openai.chatgpt` gets `chatSessionsProvider` and `languageModelProxy`, so its UI
-  works without a launch flag. Review manifests before adding other proposals.
-- `overlay/remote-ssh/`: vendored MIT source for Code Personal Remote - SSH,
-  derived from Open Remote - SSH 0.3.1. Its server resolver is branded and refuses
-  to fall back to any other distribution. Keep the upstream attribution and licenses
-  when updating it.
-- `overlay/customize.mjs`: applies the overrides and patches the upstream
-  Copilot manifest to `buildType: "prod"` before compilation. Upstream's local source
-  build otherwise retains `dev` and tries to load development-only dependencies
-  (`source-map-support` and `dotenv`) that are absent from the shipped package.
-  It also patches the upstream
-  `telemetry.telemetryLevel` default to `off`. VS Code OSS has no Microsoft
-  telemetry endpoint or crash upload URL, but bundled Copilot reports usage to
-  GitHub unless this setting is `off`; users can still opt in. The patch and
-  `verify.mjs` fail the build if upstream moves the setting.
-- `overlay/moduleignore.mjs`: since VS Code 1.139, upstream's `build/.moduleignore`
-  strips all of `@github/copilot/**`. That is right for the application root, which
-  now bundles `@github/copilot-sdk`, but the same file filters the built-in Copilot
-  extension when it is compiled from source and removed the SDK the extension needs,
-  failing `prepareBuiltInCopilotRipgrepShim`. `customize.mjs` restores the targeted
-  rules for that package; `verify.mjs` checks the packaged extension keeps its SDK.
-- `overlay/assets/code-personal.svg`: editable icon for desktop PNG and titlebar SVG.
-- `overlay/verifier/`: pinned `node-ovsx-sign` and its API adapter.
-  `package-verifier.mjs` bundles the runtime/license notices without modifying
-  upstream package files or disabling verification. It also bundles Open VSX's
-  current signing key (`open-vsx-public.pem`): `node-ovsx-sign` otherwise fetches
-  the key with plain `node-fetch` during every install, which ignores VS Code's
-  proxy settings and fails with `ENOTFOUND` on hosts without a direct network
-  path. The adapter verifies with the bundled key first and asks the registry only
-  when that key rejects a signature, so a rotated key still verifies where the
-  registry is reachable and otherwise needs a rebuild.
-- `overlay/arch/PKGBUILD.in`: package layout; revision comes from `config.json`.
-- `overlay/debian/control.in` and `overlay/deb-package.mjs`: the Debian package, built
-  with `dpkg-deb` inside the Arch container from the same verified application tree
-  and layout. Its `Depends` come from upstream's `build/linux/debian/dep-lists.ts`
-  (the reference list behind Microsoft's own `.deb`), plus `libsecret`, Kerberos and
-  `libunity9` for Electron's dynamically loaded taskbar badge integration.
-  No maintainer scripts: dpkg triggers refresh the desktop
-  and icon databases.
-- `scripts/`: preparation, build environment, release planning and artifact collection.
-- `tests/`: release-planning tests. Run `npm test` with Node 22 or newer.
-- `BUILD_HISTORY.md`: historical notes from the original checkout, including the
-  icon/signature fixes. Its old filesystem paths are historical.
+Needs Docker for your normal user, about 25–35 GB of disk per build tree, and a lot
+of memory (CI adds 8 GB of swap on its runner).
 
-If upstream changes Copilot, product fields, Electron identity or signatures, inspect
-the failed run and update the smallest relevant helper. The workflow does not merge
-patches or bypass failures automatically. Update `overlay/verifier/package-lock.json`
-deliberately when updating verifier dependencies.
+```bash
+git clone git@github.com:fyannk/vscode-personnal.git
+cd vscode-personnal
+./scripts/build-container.sh                      # tag and commit from upstream.json
+./scripts/build-container.sh --tag 1.136.1 --commit a44adf7f53e00964ab890f9f8758a334f1fc15bc
+```
 
-## Verification limits
+- The Arch container builds as an unprivileged user.
+- Native modules use upstream's pinned glibc 2.28 sysroots, so the rolling Arch host
+  does not leak a newer ABI into the desktop or server builds.
+- Node comes from upstream's `.nvmrc` and is checked against its official SHA-256.
+- `./scripts/build.sh` also runs natively with the dependencies listed in
+  `Dockerfile`. Close Code Personal first: the smoke test launches it.
+- `.work/<version>` is a disposable cache. Rebuilding reuses it and reapplies the
+  overlay; delete it when done.
 
-CI tests a headless X11 desktop, not Plasma Wayland pinning. Only the disposable
-container smoke test uses `--no-sandbox`, because nested browser sandboxing is not
-available there. This flag is never written into the app, launcher, desktop entries
-or user settings. Installed builds keep upstream sandbox behavior.
+## Releases
 
-Personal authentication, entitled Copilot responses, ghost text, agents and Next Edit
-Suggestions still need manual checks after significant updates. Upstream enables
-bundled Copilot through normal Chat setup/sign-in. Open VSX has a different catalog
-from Microsoft's Marketplace. OSS Remote Tunnels lacks commercial configuration;
-server/tunnel distributions are not separately built. No VSCodium patch set or
-commercial product configuration is used.
+**Build Code Personal releases** runs every six hours (minute 17), on relevant pushes
+to `main`, and on demand: **Actions → Build Code Personal releases → Run workflow**.
+Choose `latest` or a stable tag; clear **publish** for a test build.
 
-For personal use. Upstream and dependency notices are retained; the verifier includes
+1. Find the latest stable `microsoft/vscode` release and its exact commit.
+2. Skip a version and revision already published; retry an unfinished draft.
+3. Build in Arch Linux.
+4. Verify, package, and install the `.deb` on Ubuntu 24.04 (see below).
+5. Publish to this repository's **Releases** only if every check passed.
+
+Tags are `personal-v<VS_CODE_VERSION>-r<PACKAGE_REVISION>`. Changed the
+customization but not the VS Code version? Bump `packageRevision` in `config.json`.
+It becomes the Arch `pkgrel` and the Debian revision.
+
+Each artifact includes `build-info.json` with the upstream and customization
+commits. Builds are traceable, not byte-for-byte reproducible: Arch packages update
+inside the pinned base image.
+
+**Security.** The build job is read-only; only a separate publish job can write.
+Checkout keeps no credentials and no token reaches the build container. Actions and
+the base image are pinned. Dependabot updates Actions, Docker and verifier
+dependencies; `checks.yml` merges them once checks pass, except major verifier
+updates. No PAT or extra secret is needed.
+
+**Retention.** Release artifacts are deleted after upload (or expire after one day),
+failure logs after seven days. Release assets stay until deleted. Scheduled runs
+are polling and GitHub may delay them. Private Actions minutes count against your
+account.
+
+## Verification
+
+| | What | How |
+| --- | --- | --- |
+| ● | Upstream metadata kept; separate identity and storage; icons and editor watermark | CI, every build |
+| ● | Bundled Copilot manifest, runtime and SDK present, `buildType: prod` | CI, every build |
+| ● | Telemetry defaults to `off` everywhere it is registered | CI, every build |
+| ● | Desktop launches under Xvfb; a real Open VSX extension installs with signatures on; an altered VSIX fails | CI, every build |
+| ● | Every native add-on stays within glibc 2.28 / GLIBCXX 3.4.25 | CI, every build |
+| ● | The remote server's Node runtime can import the signature verifier | CI, every build |
+| ● | `.deb` installs on Ubuntu 24.04: launcher, version, SQLite state, terminal PTY | CI, every build |
+| ○ | Sign-in, entitled Copilot responses, ghost text, agents, Next Edit Suggestions | Manual, after major updates |
+| ○ | Plasma Wayland pinning (CI runs headless X11) | Manual |
+
+`●` checked automatically · `○` not checked automatically.
+
+Only the container smoke test uses `--no-sandbox`, because nested sandboxing is not
+available there. The flag is never written to the app, launcher, desktop entries or
+settings.
+
+## Maintain
+
+| Path | Role |
+| --- | --- |
+| `overlay/product-overrides.json` | Identity, Open VSX endpoints, proposed-API allow-list |
+| `overlay/customize.mjs` | Applies overrides, Copilot `prod` build, telemetry default, icons and watermark |
+| `overlay/moduleignore.mjs` | Keeps the Copilot SDK that upstream's `.moduleignore` strips |
+| `overlay/assets/` | App icon (`code-personal.svg`) and ermine editor watermark (`letterpress-*.svg`) |
+| `overlay/remote-ssh/` | Vendored Code Personal Remote - SSH (MIT, from Open Remote - SSH 0.3.1) |
+| `overlay/verifier/` | Pinned `node-ovsx-sign`, adapter and bundled Open VSX key |
+| `overlay/arch/`, `overlay/debian/`, `overlay/deb-package.mjs` | Arch and Debian packaging |
+| `overlay/verify.mjs` and other checks | Fail the build when an assumption breaks |
+| `scripts/` | Preparation, build environment, release planning, collection |
+| `tests/` | `npm test`, Node 22 or newer |
+| `BUILD_HISTORY.md` | Historical notes; old paths are historical |
+
+Details worth knowing before changing them:
+
+- **Proposed APIs.** `code-personal.code-personal-remote-ssh` gets `resolvers` and
+  `contribViewsRemote`; `openai.chatgpt` gets `chatSessionsProvider` and
+  `languageModelProxy` so Codex works without a launch flag. Review a manifest
+  before adding another proposal.
+- **Copilot `buildType`.** Upstream sets `prod` only in its own CI. A source build
+  keeps `dev` and tries to load `source-map-support` and `dotenv`, which are not
+  shipped.
+- **Telemetry.** VS Code OSS has no Microsoft endpoint, but bundled Copilot reports
+  usage to GitHub unless `telemetry.telemetryLevel` is `off`. The default is patched
+  to `off`; users can opt in. The build fails if upstream moves the setting.
+- **`.moduleignore`.** Since 1.139 upstream strips `@github/copilot/**`, which also
+  removed the SDK the built-in Copilot extension needs
+  (`prepareBuiltInCopilotRipgrepShim` failed). The targeted rules are restored.
+- **Signature verifier.** Bundled in desktop and server. `node-ovsx-sign` normally
+  fetches Open VSX's key on every install with plain `node-fetch`, which ignores
+  proxy settings. The adapter tries the bundled key first and asks the registry
+  only if it rejects a signature. A rotated key works where the registry is
+  reachable, otherwise it needs a rebuild. Update
+  `overlay/verifier/package-lock.json` deliberately.
+- **Debian dependencies** come from upstream's `build/linux/debian/dep-lists.ts`,
+  plus `libsecret`, Kerberos and `libunity9`. No maintainer scripts; dpkg triggers
+  refresh the desktop and icon databases.
+- **Remote SSH.** Keep upstream attribution and licenses when updating it.
+- **Identity.** Colors and marks follow [fyannk/design](https://github.com/fyannk/design).
+  Edit the SVGs in `overlay/assets/`; the build renders the desktop PNG.
+
+When upstream changes Copilot, product fields, Electron identity or signatures, a
+check fails. Inspect the run and update the smallest relevant helper. Nothing is
+patched or bypassed automatically.
+
+## Notes
+
+Copilot is enabled through the normal Chat setup and sign-in. Open VSX has a
+different catalog from Microsoft's Marketplace. OSS Remote Tunnels lacks commercial
+configuration; server and tunnel distributions are not built separately. No VSCodium patch
+set or commercial product configuration is used.
+
+References: [workflow triggers](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows) ·
+[upstream build guide](https://github.com/microsoft/vscode/wiki/How-to-Contribute) ·
+[Open VSX in VS Code](https://github.com/eclipse-openvsx/openvsx/wiki/Using-Open-VSX-in-VS-Code)
+
+For personal use. Upstream and dependency notices are kept; the verifier includes
 EPL-2.0 code.
