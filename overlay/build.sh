@@ -25,18 +25,29 @@ export npm_config_arch=x64
 export VSCODE_ARCH=x64
 export ELECTRON_SKIP_BINARY_DOWNLOAD=1
 export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+# Match upstream's CI builds: skip the ONNX Runtime binaries and the Foundry Local
+# NuGet download, which upstream only performs against its authenticated feed.
+export ONNXRUNTIME_NODE_INSTALL=skip
+export FOUNDRY_LOCAL_SKIP_INSTALL=1
+# Upstream uses pnpm since 1.146.0. Install the version pinned in the root
+# package.json's packageManager field (a no-op when it is already on PATH).
+node build/azure-pipelines/common/installPnpm.ts
 # setup-env.sh runs TypeScript helpers whose dependencies live in build/node_modules.
 # Upstream CI installs those dependencies before loading the sysroot environment.
+# set -o pipefail makes a failed install fail the build despite the tee.
 if [[ ${1:-} != --skip-install ]]; then
-	npm ci --prefix build 2>&1 | tee .personal-build/logs/npm-ci-build.log
+	(cd build && pnpm install --frozen-lockfile) 2>&1 | tee .personal-build/logs/pnpm-install-build.log
 fi
 source ./build/azure-pipelines/linux/setup-env.sh
 if [[ ${1:-} != --skip-install ]]; then
-	npm ci 2>&1 | tee .personal-build/logs/npm-ci.log
+	# Upstream runs preinstall first so that native modules build against the patched v8 headers.
+	pnpm run preinstall 2>&1 | tee .personal-build/logs/pnpm-preinstall.log
+	pnpm install --frozen-lockfile 2>&1 | tee .personal-build/logs/pnpm-install.log
+	# Code Personal's own helpers keep their npm lockfiles.
 	npm ci --prefix .personal-build/verifier --ignore-scripts --no-audit --no-fund
 fi
 # This local task includes compile-copilot-extension-build after cleaning extensions.
-npm run gulp vscode-linux-x64 2>&1 | tee .personal-build/logs/build.log
+pnpm run gulp vscode-linux-x64 2>&1 | tee .personal-build/logs/build.log
 # Bundle the Code Personal fork of Open Remote - SSH into the desktop payload.
 # Its runtime script templates remain beside the bundle because it reads them when
 # creating the remote installation command.
@@ -52,7 +63,7 @@ cp -a "$remote_ssh_source/lib" "$remote_ssh_source/resources" "$remote_ssh_targe
 cp -a "$remote_ssh_source/src/scripts" "$remote_ssh_target/src/"
 # Produce the matching remote extension host from this same customized source tree.
 node build/next/index.ts bundle --minify --nls --target server --out out-vscode-reh-min 2>&1 | tee .personal-build/logs/server-bundle.log
-npm run gulp vscode-reh-linux-x64-min-ci 2>&1 | tee .personal-build/logs/server-build.log
+pnpm run gulp vscode-reh-linux-x64-min-ci 2>&1 | tee .personal-build/logs/server-build.log
 rm -rf ../CodePersonal-server-linux-x64
 mv ../vscode-reh-linux-x64 ../CodePersonal-server-linux-x64
 bash .personal-build/package.sh
