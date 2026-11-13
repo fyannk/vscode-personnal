@@ -66,4 +66,10 @@ node build/next/index.ts bundle --minify --nls --target server --out out-vscode-
 pnpm run gulp vscode-reh-linux-x64-min-ci 2>&1 | tee .personal-build/logs/server-build.log
 rm -rf ../CodePersonal-server-linux-x64
 mv ../vscode-reh-linux-x64 ../CodePersonal-server-linux-x64
+# Since 1.146.0 the Electron payload keeps its zip entries' 0666/0777 modes. Every
+# package copies these trees verbatim, so strip group/other write before packaging
+# and refuse to package anything still writable by them.
+chmod -R go-w ../VSCode-linux-x64 ../CodePersonal-server-linux-x64
+writable=$(find ../VSCode-linux-x64 ../CodePersonal-server-linux-x64 ! -type l -perm /022 -print -quit)
+[[ -z $writable ]] || { echo "Group/other-writable file in payload: $writable" >&2; exit 1; }
 bash .personal-build/package.sh
