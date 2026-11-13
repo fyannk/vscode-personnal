@@ -294,9 +294,12 @@ export class RemoteSSHResolver implements vscode.RemoteAuthorityResolver, vscode
                 vscode.commands.executeCommand('setContext', 'forwardedPortsViewEnabled', true);
 
                 this.labelFormatterDisposable?.dispose();
+                // Scope the host-specific suffix to this exact authority: VS Code caches
+                // registered formatters across windows, so a wildcard authority labelled
+                // every SSH workspace (e.g. in Open Recent) with the last connected host.
                 this.labelFormatterDisposable = vscode.workspace.registerResourceLabelFormatter({
                     scheme: 'vscode-remote',
-                    authority: `${REMOTE_SSH_AUTHORITY}+*`,
+                    authority,
                     formatting: {
                         label: '${path}',
                         separator: '/',
