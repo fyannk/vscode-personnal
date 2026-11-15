@@ -1,4 +1,4 @@
-FROM archlinux:base-devel@sha256:624bdc7fc6615155d67bc34cf7146c0c9fd0e3c92943977da63a630e4ca49c30
+FROM archlinux:base-devel@sha256:fa2d4ce3310ddd90a4208e5168be8ad367da5129af1245f38fd2d803bcbe3239
 RUN pacman -Syu --noconfirm --needed \
     git python python-setuptools pkgconf libx11 libxkbfile libsecret krb5 \
     curl ripgrep librsvg desktop-file-utils xorg-server-xvfb xorg-xauth \
