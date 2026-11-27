@@ -62,8 +62,9 @@ assert.equal(remoteSSH.displayName, 'Code Personal Remote - SSH');
 accessSync(path.join(remoteSSHDir, 'lib/extension.js'));
 accessSync(path.join(remoteSSHDir, 'src/scripts/server-setup.sh'));
 assert.match(readFileSync(path.join(remoteSSHDir, 'lib/extension.js'), 'utf8'), /No Code Personal server download URL is configured/);
-// 1.139 moved the agent-host runtime from @github/copilot-linux-x64 to @github/copilot-sdk-linux-x64.
-const runtimes = ['@github/copilot-sdk-linux-x64', '@github/copilot-linux-x64'].map(name => path.join(app, 'node_modules.asar.unpacked', name)).filter(dir => existsSync(dir));
+// 1.139 moved the agent-host runtime from @github/copilot-linux-x64 to @github/copilot-sdk-linux-x64,
+// and 1.148 moved the SDK to the @microsoft scope (@microsoft/copilot-sdk-linux-x64).
+const runtimes = ['@microsoft/copilot-sdk-linux-x64', '@github/copilot-sdk-linux-x64', '@github/copilot-linux-x64'].map(name => path.join(app, 'node_modules.asar.unpacked', name)).filter(dir => existsSync(dir));
 assert.equal(runtimes.length, 1, `Exactly one bundled Copilot runtime package, found ${runtimes.join(', ') || 'none'}`);
 const [runtime] = runtimes;
 // The main process and the workbench both register the user setting and must carry the
